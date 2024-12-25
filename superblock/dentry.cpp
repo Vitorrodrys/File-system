@@ -9,6 +9,8 @@ DEntry :: DEntry(){
     this->quantity_entries = 0;
 }
 
+
+// ------------------- Serialize & Deserialize operations -----------------------------------
 std::vector<char> DEntry::serialize_to_bytes() const {
     std::vector<char> bytes;
 
@@ -26,6 +28,10 @@ std::vector<char> DEntry::serialize_to_bytes() const {
 
     return bytes;
 }
+
+
+
+// ------------------ Save & Load operations -----------------------------------------------
 
 void DEntry :: save(const std::string& path) const{
     std::vector<char> serialized_bytes = this->serialize_to_bytes();
