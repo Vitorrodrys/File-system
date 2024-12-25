@@ -29,6 +29,9 @@ std::vector<char> DEntry::serialize_to_bytes() const {
 
 
 
+
+
+
 // ------------------ Save & Load operations -----------------------------------------------
 
 void DEntry :: save(const std::string& path) const{
@@ -80,6 +83,10 @@ InodeType DEntry ::get_inode(const std::string& path) const {
         return false;
     }
 
-    return  this->inode_map[path];
+
+    auto it=this->inode_map.find(path);
+
+    return  it->second();
 
 }
+
