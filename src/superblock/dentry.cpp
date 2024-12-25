@@ -14,14 +14,29 @@ DEntry :: DEntry(){
 std::vector<char> DEntry::serialize_to_bytes() const {
     std::vector<char> bytes;
 
+    //store at the first 4 bytes the quantity of entries exists on hashmap
+    bytes.insert(
+        bytes.end(),
+        reinterpret_cast<const char*>(&this->quantity_entries),
+        reinterpret_cast<const char*>(&this->quantity_entries) + sizeof(unsigned int)
+    );
     for (const auto& pair : this->inode_map) {
-        size_t key_size = sizeof(std::string);
-        bytes.insert(bytes.end(), reinterpret_cast<const char*>(&key_size), reinterpret_cast<const char*>(&key_size + sizeof(std::string)));
-        bytes.insert(bytes.end(), reinterpret_cast<const char*>(&pair.first), reinterpret_cast<const char*>(&pair.first + sizeof(std::string)));
+        //store the key_size followed by the key string in bytes vector
+        size_t key_size = pair.first.size();
+        bytes.insert(
+            bytes.end(),
+            reinterpret_cast<const char*>(&key_size),
+            reinterpret_cast<const char*>(&key_size) + sizeof(size_t)
+        );
+        bytes.insert(
+            bytes.end(),
+            pair.first.begin(),
+            pair.first.end()
+        );
 
+        //store the value into the bytes vector
         size_t value_size = sizeof(InodeType);
-        bytes.insert(bytes.end(), reinterpret_cast<const char*>(&value_size), reinterpret_cast<const char*>(&value_size + sizeof(InodeType)));
-        bytes.insert(bytes.end(), reinterpret_cast<const char*>(&pair.second), reinterpret_cast<const char*>(&pair.second + sizeof(InodeType)));
+        bytes.insert(bytes.end(), reinterpret_cast<const char*>(&pair.second), reinterpret_cast<const char*>(&pair.second) + sizeof(InodeType));
     }
 
     return bytes;
