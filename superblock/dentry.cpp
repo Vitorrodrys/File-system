@@ -1,7 +1,13 @@
+#include <fstream>
+
 #include "superblock/dentry.hpp"
 
 
 
+DEntry :: DEntry(){
+    this->inode_map = std::unordered_map<std::string, InodeType>();
+    this->quantity_entries = 0;
+}
 
 std::vector<char> DEntry::serialize_to_bytes() const {
     std::vector<char> bytes;
@@ -21,5 +27,15 @@ std::vector<char> DEntry::serialize_to_bytes() const {
     return bytes;
 }
 
+void DEntry :: save(const std::string& path) const{
+    std::vector<char> serialized_bytes = this->serialize_to_bytes();
+
+    std::ofstream outFile(path, std::ios::binary);
+    if (!outFile) {
+        throw std::runtime_error("Could not open file " + path);
+    }
+    outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), serialized_bytes.size());
+
+}
 
 
