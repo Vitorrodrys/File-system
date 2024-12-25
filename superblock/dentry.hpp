@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 #ifndef DENTRY_HPP
 #define DENTRY_HPP
@@ -9,24 +10,23 @@ typedef unsigned long long int InodeType;
 
 class DEntry {
     public:
-        DEntry();
+        explicit DEntry();
         ~DEntry();
-        static DEntry& load(const char& path); // TODO: check if we really will be receive a path file here
-        void save(const char& path) const; // TODO: check if we really will be receive a path file here
-        bool add_entry(const char& path, InodeType inode );
-        bool remove_entry(const char& path);
-        InodeType get_inode(const char& path) const;
+
+        // TODO: check if we really needs receive a path here
+        static DEntry& load(const std::string& path);  
+        void save(const std::string& path) const;    
+
+        bool add_entry(const std::string& path, InodeType inode);
+        bool remove_entry(const std::string& path);
+        InodeType get_inode(const std::string& path) const;
 
     private:
-        //we will needs have more things here, such as the listing of free inodes, or other 
-        //data structs to help us to manage us superblock
         std::unordered_map<std::string, InodeType> inode_map;
         unsigned int quantity_entries;
 
         std::vector<char> serialize_to_bytes() const;
-        static void deserialize_from_bytes();
-
-
-}
+        static void deserialize_from_bytes(const std::vector<char>& data);
+};
 
 #endif
