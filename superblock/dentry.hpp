@@ -17,7 +17,6 @@ class DEntry {
         bool add_entry(const char& path, InodeType inode );
         bool remove_entry(const char& path);
         InodeType get_inode(const char& path) const;
-        bool is_directory(const char& path) const;
 
     private:
         //we will needs have more things here, such as the listing of free inodes, or other 
