@@ -101,7 +101,7 @@ InodeType DEntry ::get_inode(const std::string& path) const {
 
     auto it=this->inode_map.find(path);
 
-    return  it->second();
+    return  it->second;
 
 }
 
