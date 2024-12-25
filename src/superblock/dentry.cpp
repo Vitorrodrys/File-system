@@ -43,17 +43,33 @@ void DEntry :: save(const std::string& path) const{
 }
 
 
-
-
-bool DEntry :: add_entry(const std::string& path, InodeType inode){
+bool DEntry ::exists(const int &path) const {
 
     auto end_signal = this->inode_map.end();
     // if the element already exists on the map, then return false and do nothing
     if (this->inode_map.find(path) != end_signal ){
-        return false;
+        return true;
+    }
+    return false;
+}
+
+bool DEntry :: add_entry(const std::string& path, InodeType inode){
+
+    if(this->exists(path)){
+       return false;
     }
 
     this->inode_map[path] = inode;
     this->quantity_entries++;
     return true;
+}
+
+void DEntry ::remove_entry(const int &path) {
+
+    if(!this->exists(path)){
+        return false;
+    }
+
+    this->inode_map.erase(path);
+
 }

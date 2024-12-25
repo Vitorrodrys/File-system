@@ -20,6 +20,7 @@ class DEntry {
         bool add_entry(const std::string& path, InodeType inode);
         bool remove_entry(const std::string& path);
         InodeType get_inode(const std::string& path) const;
+        bool exists(const std::string& path) const;
 
     private:
         std::unordered_map<std::string, InodeType> inode_map;
