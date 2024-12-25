@@ -1,36 +1,39 @@
-# Compiler and Linker
-CXX = g++           # C++ compiler (you can change this to clang++, etc.)
-CXXFLAGS = -std=c++17 -Wall -g  # Compiler flags (for example: C++17, all warnings, debug symbols)
-LDFLAGS =            # Linker flags, if needed (usually empty for simple cases)
+# Diretórios de origem e de objetos
+SRCD = src
+OBJD = obj
 
-# Directories
-SRC_DIR = src        # Source files directory
-OBJ_DIR = obj        # Object files directory
-BIN_DIR = bin        # Output directory for the executable
+# Nome do binário de saída
+BIN = filesystem.out
 
-# File Extensions
-SRC_EXT = cpp        # Source file extension
-OBJ_EXT = o          # Object file extension
+# Compilador e flags
+CXX = g++
+CXXFLAGS = -Wall -g -std=c++17  # Ajuste as flags conforme necessário
 
-# Sources and Objects
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)         # All source files in the src directory
-OBJECTS = $(SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/%.$(OBJ_EXT))  # Corresponding object files
-EXEC = $(BIN_DIR)   # The final executable name
+# Encontrar todos os arquivos .cpp recursivamente em SRCD
+SRCS = $(shell find $(SRCD) -name '*.cpp')
 
-# Default target
-all: $(EXEC)
+# Gerar a lista de arquivos objeto (.o) correspondente
+OBJS = $(SRCS:$(SRCD)/%.cpp=$(OBJD)/%.o)
 
-# Rule for creating the executable
-$(EXEC): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(EXEC) $(LDFLAGS)
+# Regra default: compilar e linkar tudo
+all: $(BIN)
 
-# Rule for compiling .cpp files to .o files
-$(OBJ_DIR)/%.$(OBJ_EXT): $(SRC_DIR)/%.$(SRC_EXT)
+# Regra para linkar o binário final
+$(BIN): $(OBJS)
+	$(CXX) $(OBJS) -o $(BIN)
+
+# Regra para compilar os arquivos .cpp para .o
+$(OBJD)/%.o: $(SRCD)/%.cpp
+	@mkdir -p $(dir $@)  # Garante que o diretório obj/subdiretorios exista
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean up generated files
+# Regra para limpar os arquivos gerados
 clean:
-	rm -rf $(OBJ_DIR)/*.o $(BIN_DIR)/$(EXEC)
+	rm -rf $(OBJD) $(BIN)
 
-# Phony targets (non-file targets)
-.PHONY: all clean
+# Regra para limpar apenas os arquivos objeto
+clean-obj:
+	rm -rf $(OBJD)/*.o
+
+# Regra para recompilar tudo
+rebuild: clean all

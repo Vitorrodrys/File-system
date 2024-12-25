@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "superblock/dentry.hpp"
+#include "dentry.hpp"
 
 
 
@@ -55,4 +55,5 @@ bool DEntry :: add_entry(const std::string& path, InodeType inode){
 
     this->inode_map[path] = inode;
     this->quantity_entries++;
+    return true;
 }
