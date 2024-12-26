@@ -11,10 +11,9 @@ typedef unsigned long long int InodeType;
 class DEntry {
     public:
         explicit DEntry();
+        explicit DEntry(const std::string& binary_filepath);
         ~DEntry();
-
-        // TODO: check if we really needs receive a path here
-        static DEntry& load(const std::string& path);  
+ 
         void save(const std::string& path) const;    
 
         bool add_entry(const std::string& path, InodeType inode);
@@ -27,7 +26,7 @@ class DEntry {
         unsigned int quantity_entries;
 
         std::vector<char> serialize_to_bytes() const;
-        static void deserialize_from_bytes(const std::string& data);
+        void deserialize_from_bytes(const std::string& data);
 };
 
 #endif

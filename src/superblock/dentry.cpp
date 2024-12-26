@@ -9,6 +9,10 @@ DEntry :: DEntry(){
     this->quantity_entries = 0;
 }
 
+DEntry :: ~DEntry(){
+    this->inode_map.clear();
+}
+
 
 // ------------------- Serialize & Deserialize operations -----------------------------------
 std::vector<char> DEntry::serialize_to_bytes() const {
@@ -59,7 +63,6 @@ void DEntry :: save(const std::string& path) const{
     outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), serialized_bytes.size());
 
 }
-
 
 bool DEntry ::exists(const std::string& path) const {
 
