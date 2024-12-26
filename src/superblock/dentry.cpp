@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 
 #include "dentry.hpp"
 
@@ -41,7 +42,37 @@ std::vector<char> DEntry::serialize_to_bytes() const {
 
     return bytes;
 }
+void DEntry :: deserialize_from_bytes(DEntry dentry,const std::string& file_name){
+    std :: ifstream infile(file_name, std::ios::binary);
 
+    if(!infile){
+        throw std :: runtime_error("arquivo da dentry não existe "+file_name);
+    }
+
+    unsigned int quantity_entries=0;
+    infile.read(reinterpret_cast<char*>(&quantity_entries), sizeof(quantity_entries));
+
+
+
+    int size_chave =0;
+    DEntry  entry();
+    for (int i = 0; i < quantity_entries; ++i) {
+
+        infile.read(reinterpret_cast<char*>(&size_chave),size_chave(quantity_entries));
+
+        std::string chave(size_chave, '\0');
+        infile.read(&chave[0], size_chave);
+
+
+        InodeType valor=0;
+        infile.read(reinterpret_cast<char*>(&valor), sizeof(valor));
+
+        this->inode_map[chave]= valor;
+    }
+
+
+
+}
 
 
 

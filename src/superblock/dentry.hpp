@@ -27,7 +27,7 @@ class DEntry {
         unsigned int quantity_entries;
 
         std::vector<char> serialize_to_bytes() const;
-        static void deserialize_from_bytes(const std::string& data);
+        static void deserialize_from_bytes(DEntry dentry,const std::string& file_name);
 };
 
 #endif
