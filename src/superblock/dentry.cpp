@@ -10,6 +10,10 @@ DEntry :: DEntry(){
     this->quantity_entries = 0;
 }
 
+DEntry :: DEntry(const std::string& binary_filepath){
+    this->deserialize_from_bytes(binary_filepath);
+}
+
 DEntry :: ~DEntry(){
     this->inode_map.clear();
 }
@@ -46,7 +50,7 @@ std::vector<char> DEntry::serialize_to_bytes() const {
 
     return bytes;
 }
-void DEntry :: deserialize_from_bytes(DEntry dentry,const std::string& file_name){
+void DEntry :: deserialize_from_bytes(const std::string& file_name){
     std :: ifstream infile(file_name, std::ios::binary);
 
     if(!infile){
@@ -57,22 +61,22 @@ void DEntry :: deserialize_from_bytes(DEntry dentry,const std::string& file_name
     infile.read(reinterpret_cast<char*>(&quantity_entries), sizeof(quantity_entries));
 
 
-
-    int size_chave =0;
+    size_t size_chave =0;
     DEntry  entry();
     for (int i = 0; i < quantity_entries; ++i) {
 
-        infile.read(reinterpret_cast<char*>(&size_chave),size_chave(quantity_entries));
+        infile.read(reinterpret_cast<char*>(&size_chave),sizeof(size_t));
 
         std::string chave(size_chave, '\0');
         infile.read(&chave[0], size_chave);
 
 
         InodeType valor=0;
-        infile.read(reinterpret_cast<char*>(&valor), sizeof(valor));
+        infile.read(reinterpret_cast<char*>(&valor), sizeof(InodeType));
 
         this->inode_map[chave]= valor;
     }
+    this->quantity_entries=quantity_entries;
 
 
 
@@ -123,6 +127,8 @@ bool DEntry ::remove_entry(const std::string& path) {
     }
 
     this->inode_map.erase(path);
+    this->quantity_entries--;
+    return true;
 
 }
 
