@@ -44,7 +44,6 @@ std::vector<char> DEntry::serialize_to_bytes() const {
         );
 
         //store the value into the bytes vector
-        size_t value_size = sizeof(InodeType);
         bytes.insert(bytes.end(), reinterpret_cast<const char*>(&pair.second), reinterpret_cast<const char*>(&pair.second) + sizeof(InodeType));
     }
 
@@ -95,7 +94,7 @@ void DEntry :: save(const std::string& path) const{
     if (!outFile) {
         throw std::runtime_error("Could not open file " + path);
     }
-    outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), serialized_bytes.size());
+    outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), static_cast<std::streamsize>(serialized_bytes.size()));
 
 }
 
@@ -124,7 +123,7 @@ bool DEntry ::remove_entry(const std::string& path) {
 
     if(!this->exists(path)){
         return false;
-    }
+    }static_cast
 
     this->inode_map.erase(path);
     this->quantity_entries--;
