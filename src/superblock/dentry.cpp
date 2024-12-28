@@ -57,29 +57,25 @@ void DEntry :: deserialize_from_bytes(const std::string& file_name){
         throw std :: runtime_error("arquivo da dentry não existe "+file_name);
     }
 
-    unsigned int quantity_entries=0;
-    infile.read(reinterpret_cast<char*>(&quantity_entries), sizeof(quantity_entries));
+    unsigned int size_chave;
+    infile.read(reinterpret_cast<char*>(&size_chave), sizeof(unsigned int));
 
 
-    size_t size_chave =0;
-    DEntry  entry();
-    for (int i = 0; i < quantity_entries; ++i) {
+    size_t size_string_chave =0;
 
-        infile.read(reinterpret_cast<char*>(&size_chave),sizeof(size_t));
+    for (int i = 0; i < size_chave; ++i) {
 
-        std::string chave(size_chave, '\0');
-        infile.read(&chave[0], size_chave);
+        infile.read(reinterpret_cast<char*>(&size_string_chave),sizeof(size_t));
 
+        std::string chave(size_string_chave, '\0');
+        infile.read(&chave[0], sizeof(size_t));
 
         InodeType valor=0;
         infile.read(reinterpret_cast<char*>(&valor), sizeof(InodeType));
 
         this->inode_map[chave]= valor;
     }
-    this->quantity_entries=quantity_entries;
-
-
-
+    this->quantity_entries=size_chave;
 }
 
 
