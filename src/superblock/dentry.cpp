@@ -56,25 +56,25 @@ void DEntry :: deserialize_from_bytes(const std::string& file_name){
         throw std :: runtime_error("arquivo da dentry não existe "+file_name);
     }
 
-    unsigned int size_chave;
-    infile.read(reinterpret_cast<char*>(&size_chave), sizeof(unsigned int));
+    unsigned int quantity_archives;
+    infile.read(reinterpret_cast<char*>(&quantity_archives), sizeof(unsigned int));
 
 
-    size_t size_string_chave =0;
+    size_t key_size = 0;
+    InodeType value=0;
+  
+    for (unsigned int i = 0; i < quantity_archives; ++i) {
 
-    for (int i = 0; i < size_chave; ++i) {
+        infile.read(reinterpret_cast<char*>(&key_size),sizeof(size_t));
 
-        infile.read(reinterpret_cast<char*>(&size_string_chave),sizeof(size_t));
+        std::string key(key_size, '\0');
+        infile.read(&key[0], sizeof(char)*key_size);
 
-        std::string chave(size_string_chave, '\0');
-        infile.read(&chave[0], sizeof(size_t));
+        infile.read(reinterpret_cast<char*>(&value), sizeof(InodeType));
 
-        InodeType valor=0;
-        infile.read(reinterpret_cast<char*>(&valor), sizeof(InodeType));
-
-        this->inode_map[chave]= valor;
+        this->inode_map[key] = value;
     }
-    this->quantity_entries=size_chave;
+    this->quantity_entries=quantity_archives;
 }
 
 
@@ -119,7 +119,7 @@ bool DEntry ::remove_entry(const std::string& path) {
 
     if(!this->exists(path)){
         return false;
-    }static_cast
+    }
 
     this->inode_map.erase(path);
     this->quantity_entries--;
