@@ -10,6 +10,10 @@ DEntry :: DEntry(){
     this->quantity_entries = 0;
 }
 
+DEntry :: DEntry(const std::string& binary_filepath){
+    this->deserialize_from_bytes(binary_filepath);
+}
+
 DEntry :: ~DEntry(){
     this->inode_map.clear();
 }
@@ -40,42 +44,37 @@ std::vector<char> DEntry::serialize_to_bytes() const {
         );
 
         //store the value into the bytes vector
-        size_t value_size = sizeof(InodeType);
         bytes.insert(bytes.end(), reinterpret_cast<const char*>(&pair.second), reinterpret_cast<const char*>(&pair.second) + sizeof(InodeType));
     }
 
     return bytes;
 }
-void DEntry :: deserialize_from_bytes(DEntry dentry,const std::string& file_name){
+void DEntry :: deserialize_from_bytes(const std::string& file_name){
     std :: ifstream infile(file_name, std::ios::binary);
 
     if(!infile){
         throw std :: runtime_error("arquivo da dentry não existe "+file_name);
     }
 
-    unsigned int quantity_entries=0;
-    infile.read(reinterpret_cast<char*>(&quantity_entries), sizeof(quantity_entries));
+    unsigned int quantity_archives;
+    infile.read(reinterpret_cast<char*>(&quantity_archives), sizeof(unsigned int));
 
 
+    size_t key_size = 0;
+    InodeType value=0;
+  
+    for (unsigned int i = 0; i < quantity_archives; ++i) {
 
-    int size_chave =0;
-    DEntry  entry();
-    for (unsigned int i = 0; i < quantity_entries; ++i) {
+        infile.read(reinterpret_cast<char*>(&key_size),sizeof(size_t));
 
-        infile.read(reinterpret_cast<char*>(&size_chave),size_chave(quantity_entries));
+        std::string key(key_size, '\0');
+        infile.read(&key[0], sizeof(char)*key_size);
 
-        std::string chave(size_chave, '\0');
-        infile.read(&chave[0], size_chave);
+        infile.read(reinterpret_cast<char*>(&value), sizeof(InodeType));
 
-
-        InodeType valor=0;
-        infile.read(reinterpret_cast<char*>(&valor), sizeof(valor));
-
-        this->inode_map[chave]= valor;
+        this->inode_map[key] = value;
     }
-
-
-
+    this->quantity_entries=quantity_archives;
 }
 
 
@@ -91,7 +90,7 @@ void DEntry :: save(const std::string& path) const{
     if (!outFile) {
         throw std::runtime_error("Could not open file " + path);
     }
-    outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), serialized_bytes.size());
+    outFile.write(reinterpret_cast<const char*>(serialized_bytes.data()), static_cast<std::streamsize>(serialized_bytes.size()));
 
 }
 
@@ -123,6 +122,8 @@ bool DEntry ::remove_entry(const std::string& path) {
     }
 
     this->inode_map.erase(path);
+    this->quantity_entries--;
+    return true;
 
 }
 
