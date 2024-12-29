@@ -4,6 +4,9 @@
 
 #include "blocks_manager.hpp"
 
+
+const Env& envs = Env::get_instance();
+
 BlocksManager :: BlocksManager(){
     this->first = 0;
     this->last = envs.block_quantity - 1;
@@ -22,6 +25,7 @@ BlocksManager :: BlocksManager(const std::string& path){
     if (!infile) {
         throw std::runtime_error("Could not open file " + path);
     }
+    this->free_blocks = new InodeType[envs.block_quantity];
     infile.read(reinterpret_cast<char*>(&this->first), sizeof(InodeType));
     infile.read(reinterpret_cast<char*>(this->free_blocks), static_cast<std::streamsize>(envs.block_quantity * sizeof(InodeType)));
     infile.read(reinterpret_cast<char*>(&this->last), sizeof(InodeType));
