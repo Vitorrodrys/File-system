@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <string.h>
 
 #include "blocks_manager.hpp"
 
@@ -22,12 +23,19 @@ BlocksManager :: BlocksManager(const std::string& path){
         throw std::runtime_error("Could not open file " + path);
     }
     infile.read(reinterpret_cast<char*>(&this->first), sizeof(InodeType));
-    infile.read(reinterpret_cast<char*>(this->free_blocks), envs.block_quantity * sizeof(InodeType));
+    infile.read(reinterpret_cast<char*>(this->free_blocks), static_cast<std::streamsize>(envs.block_quantity * sizeof(InodeType)));
     infile.read(reinterpret_cast<char*>(&this->last), sizeof(InodeType));
 }
 
+BlocksManager:: BlocksManager(const BlocksManager& other){
+    this->first = other.first;
+    this->last = other.last;
+    this->free_blocks = new InodeType[envs.block_quantity];
+    memcpy(this->free_blocks, other.free_blocks, envs.block_quantity * sizeof(InodeType));
+}
+
 InodeType BlocksManager :: get_free_block(){
-    if (this->first == -1){
+    if (this->first == END_OF_LIST){
         return END_OF_LIST;
     }
     InodeType block = this->first;
@@ -48,6 +56,6 @@ void BlocksManager :: save(const std::string& path) const{
         throw std::runtime_error("Could not open file " + path);
     }
     outfile.write(reinterpret_cast<const char*>(&this->first), sizeof(InodeType));
-    outfile.write(reinterpret_cast<const char*>(this->free_blocks), envs.block_quantity * sizeof(InodeType));
+    outfile.write(reinterpret_cast<const char*>(this->free_blocks), static_cast<std::streamsize>(envs.block_quantity * sizeof(InodeType)));
     outfile.write(reinterpret_cast<const char*>(&this->last), sizeof(InodeType));
 }

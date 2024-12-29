@@ -60,7 +60,7 @@ void DEntry :: deserialize_from_bytes(DEntry dentry,const std::string& file_name
 
     int size_chave =0;
     DEntry  entry();
-    for (int i = 0; i < quantity_entries; ++i) {
+    for (unsigned int i = 0; i < quantity_entries; ++i) {
 
         infile.read(reinterpret_cast<char*>(&size_chave),size_chave(quantity_entries));
 

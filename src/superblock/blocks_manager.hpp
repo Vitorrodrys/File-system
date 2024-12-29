@@ -18,8 +18,9 @@ class BlocksManager {
         InodeType* free_blocks;
 
     public:
-        BlocksManager();
-        BlocksManager(const std::string& path);
+        explicit BlocksManager();
+        explicit BlocksManager(const BlocksManager& other);
+        explicit BlocksManager(const std::string& path);
         ~BlocksManager();
 
         InodeType get_free_block();
