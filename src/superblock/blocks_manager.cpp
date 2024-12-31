@@ -4,6 +4,7 @@
 
 #include "blocks_manager.hpp"
 
+#include "../block_operations.hpp"
 
 const Env& envs = Env::get_instance();
 

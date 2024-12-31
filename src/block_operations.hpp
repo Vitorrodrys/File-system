@@ -1,3 +1,5 @@
+#ifndef BLOCK_OPERATIONS_H
+#define BLOCK_OPERATIONS_H
 #include <string>
 
 
@@ -34,3 +36,5 @@ class BlockOperations{
         std::string binary_disk_path;
         
 };
+
+#endif
