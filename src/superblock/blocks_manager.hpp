@@ -2,6 +2,7 @@
 
 #include "../env.hpp"
 #include "../inodes/fcb.hpp"
+#include "../block_operations.hpp"
 
 const BlockType END_OF_LIST = Env::get_instance().block_quantity+1;
 const BlockType OCCUPIED = Env::get_instance().block_quantity+2;

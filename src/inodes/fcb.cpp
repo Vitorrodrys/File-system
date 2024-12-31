@@ -1,8 +1,10 @@
 #include <sys/types.h>
 #define MAX_POINTERS 12
 
-#include "../env.hpp"
 #include "fcb.hpp"
+
+#include "../env.hpp"
+#include "../block_operations.hpp"
 
 typedef struct HeaderIndexs{
     BlockType data_inodes[MAX_POINTERS-1];
