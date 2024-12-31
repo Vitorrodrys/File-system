@@ -1,12 +1,10 @@
+#ifndef DENTRY_HPP
+#define DENTRY_HPP
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <string>
-
-#ifndef DENTRY_HPP
-#define DENTRY_HPP
-
-typedef unsigned long long int InodeType;
+#include "inodes/fcb.hpp"
 
 class DEntry {
     public:
