@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include "inodes/fcb.hpp"
+#include "../inodes/fcb.hpp"
 
 class DEntry {
     public:

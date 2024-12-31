@@ -4,8 +4,11 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include "env.hpp"
 #include "fuse.hpp"
 
+
+const Env& envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
     if (strcmp(path, "/teste.txt") != 0) {
         return -ENOENT; // Arquivo não encontrado
