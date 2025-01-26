@@ -6,6 +6,7 @@
 #include "blocks_manager.hpp"
 #include "../env.hpp"
 
+
 const Env& envs = Env::get_instance();
 
 void BlocksManager :: init(){
