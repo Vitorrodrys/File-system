@@ -1,3 +1,6 @@
+#ifndef BLOCKS_MANAGER_HPP
+#define BLOCKS_MANAGER_HPP
+
 #include <string>
 
 #include "types.hpp"
@@ -26,3 +29,5 @@ class BlocksManager {
         void save() const;
 
 };
+
+#endif

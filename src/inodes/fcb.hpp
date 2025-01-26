@@ -2,10 +2,6 @@
 #define FCB_HPP
 
 #include <fstream>
-#include <unordered_map>
-#include <functional>
-#include <fuse.h>
-#include <sys/types.h>
 
 #include "../superblock/blocks_manager.hpp"
 #include "../superblock/types.hpp"
@@ -24,13 +20,6 @@ typedef struct HeaderIndexs{
     BlockType data_inodes[MAX_POINTERS-1];
     BlockType single_indirect;
 }HeaderIndexs;
-
-enum class FileType {
-    TFILE,
-    TDIRECTORY,
-    THLINK,
-    TSLINK
-};
 
 typedef struct FcbInode {
     char name[256];
