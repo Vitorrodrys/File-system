@@ -21,10 +21,9 @@ int open(const char *path, struct fuse_file_info *fi) {
 
 
 struct fuse_operations * build_fuse_operations(){
-    struct fuse_operations *fuse_op = new struct fuse_operations;
-    memset(fuse_op, 0, sizeof(struct fuse_operations));
-    *fuse_op = (struct fuse_operations){
+    static struct fuse_operations fuse_op = (struct fuse_operations){
         .open = open,
+        .lookup = NULL,
     };
-    return fuse_op;
+    return &fuse_op;
 }

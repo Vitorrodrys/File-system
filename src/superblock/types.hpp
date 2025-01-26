@@ -1,6 +1,9 @@
-#ifndef TYEPS_HPP
-#define TYEPS_HPP
+#ifndef TYPES_HPP
+#define TYPES_HPP
 
-typedef unsigned long long int InodeType; // points to a Inode of the a file or disk
-typedef unsigned long long int BlockType; // points to a logical block of the disk
+#include <stdint.h> 
+#include <fuse.h>
+
+typedef uint64_t InodeType; // points to a Inode of the a file or disk
+typedef uint64_t BlockType; // points to a logical block of the disk
 #endif
