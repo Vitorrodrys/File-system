@@ -42,10 +42,9 @@ File::File(BlocksManager& bmanager, struct fuse_file_info* fi, const struct fuse
           return temp;
       }()) {}
 
-File::File(const struct fuse_file_info* fi)
+File::File(InodeType id)
     : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb([&]() -> FcbInode {
-          InodeType id = static_cast<InodeType>(fi->fh);
           FcbInode temp;
           file.seekg(id * BLOCK_SIZE);
           file.read(reinterpret_cast<char*>(&temp), sizeof(FcbInode));

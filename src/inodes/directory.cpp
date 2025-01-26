@@ -27,7 +27,7 @@ std::vector<unsigned char> Directory::serialize_entries() {
     }
     return buffer;
 }
-Directory::Directory(const struct fuse_file_info *fi) : File(fi) {
+Directory::Directory(InodeType id) : File(id) {
     char *buf = new char[fcb.size];
     read(0, fcb.size, buf);
     
@@ -47,8 +47,7 @@ Directory::Directory(const struct fuse_file_info *fi) : File(fi) {
 }
 
 
-bool Directory::create_entry(const char* name, InodeType inode, BlocksManager& bmanager) {
-    std::string key(name);
+bool Directory::create_entry(const std::string& key, InodeType inode, BlocksManager& bmanager) {
     if (entries.find(key) != entries.end()) {
         return false;
     }
@@ -56,8 +55,7 @@ bool Directory::create_entry(const char* name, InodeType inode, BlocksManager& b
     return true;
 }
 
-BlockType Directory::remove_entry(const char* name, BlocksManager& bmanager) {
-    std::string key(name);
+BlockType Directory::remove_entry(const std::string& key, BlocksManager& bmanager) {
     if (entries.find(key) == entries.end()) {
         return 0;
     }
@@ -70,8 +68,7 @@ void Directory::flush(BlocksManager& bmanager) {
     write(0, buffer.size(), reinterpret_cast<char*>(buffer.data()), bmanager);
 }
 
-InodeType Directory::get_inode(const char* name) {
-    std::string key(name);
+InodeType Directory::get_inode(const std::string& key) {
     if (entries.find(key) == entries.end()) {
         return 0;
     }
