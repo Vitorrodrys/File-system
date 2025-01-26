@@ -1,13 +1,15 @@
 #include <fstream>
+#include <experimental/filesystem>
 #include <iostream>
 #include <string.h>
 
 #include "blocks_manager.hpp"
+#include "../env.hpp"
 
 
 const Env& envs = Env::get_instance();
 
-BlocksManager :: BlocksManager(){
+void BlocksManager :: init(){
     this->first = 0;
     this->last = envs.block_quantity - 1;
     this->free_blocks = new InodeType[envs.block_quantity];
@@ -20,7 +22,12 @@ BlocksManager :: ~BlocksManager(){
     delete[] this->free_blocks;
 }
 
-BlocksManager :: BlocksManager(const std::string& path){
+BlocksManager :: BlocksManager(){
+    const std::string& path = envs.disk_file;
+    if ( !std::experimental::filesystem::exists(path) ){
+        this->init();
+        return;
+    }
     std::ifstream infile(path, std::ios::binary);
     if (!infile) {
         throw std::runtime_error("Could not open file " + path);
@@ -54,7 +61,8 @@ void BlocksManager :: release_block(InodeType block) {
     this->last = block;
 }
 
-void BlocksManager :: save(const std::string& path) const{
+void BlocksManager :: save() const{
+    const std::string& path = envs.disk_file;
     std::ofstream outfile(path, std::ios::binary);
     if (!outfile) {
         throw std::runtime_error("Could not open file " + path);

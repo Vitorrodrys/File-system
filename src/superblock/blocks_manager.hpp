@@ -1,7 +1,5 @@
 #include <string>
 
-#include "../env.hpp"
-
 
 typedef unsigned long long int InodeType;
 
@@ -15,14 +13,15 @@ class BlocksManager {
         InodeType last;
         InodeType* free_blocks;
 
+        void init();
+
     public:
-        explicit BlocksManager();
         explicit BlocksManager(const BlocksManager& other);
-        explicit BlocksManager(const std::string& path);
+        explicit BlocksManager();
         ~BlocksManager();
 
         InodeType get_free_block();
         void release_block(InodeType block);
-        void save(const std::string& path) const;
+        void save() const;
 
 };
