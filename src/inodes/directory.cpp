@@ -55,7 +55,7 @@ bool Directory::create_entry(const std::string& key, InodeType inode) {
     return true;
 }
 
-BlockType Directory::remove_entry(const std::string& key) {
+InodeType Directory::remove_entry(const std::string& key) {
     if (entries.find(key) == entries.end()) {
         return 0;
     }
