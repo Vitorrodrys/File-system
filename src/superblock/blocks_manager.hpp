@@ -3,7 +3,6 @@
 #include "types.hpp"
 
 #include "../env.hpp"
-#include "../inodes/fcb.hpp"
 
 const InodeType END_OF_LIST = Env::get_instance().block_quantity+1;
 const InodeType OCCUPIED = Env::get_instance().block_quantity+2;
