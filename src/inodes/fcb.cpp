@@ -1,6 +1,7 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
+#include <fuse.h>
 #include <unordered_map>
 
 
