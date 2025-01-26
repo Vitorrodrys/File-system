@@ -50,7 +50,7 @@ const Env& envs = Env::get_instance();
 
 class File {
 
-    private:
+    protected:
 
         std::fstream file;
         FcbInode fcb;
@@ -140,22 +140,30 @@ class File {
             file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
         }
     private:
+        void update_fcb(){
+            file.seekp(fcb.id * BLOCK_SIZE);
+            file.write(reinterpret_cast<const char*>(&fcb), sizeof(FcbInode));
+        }
+
         BlockType load_indirect(BlockType block, HeaderIndexs* indirect_inode){
             file.seekg(block * BLOCK_SIZE);
             file.read(reinterpret_cast<char*>(indirect_inode), sizeof(HeaderIndexs));
             return block;
         }
-        bool find_block(BlockType block, DataInode *inoded){
-            auto headers = fcb.headers;
-            while (block >= MAX_POINTERS-1){
-                block -= MAX_POINTERS-1;
+        BlockType get_block_value(uint32_t index){
+            HeaderIndexs headers = fcb.headers;
+            while (index >= MAX_POINTERS-1){
+                index -= MAX_POINTERS-1;
                 load_indirect(headers.single_indirect, &headers);
             }
-            BlockType inode_block = headers.data_inodes[block];
-            if ( inode_block == 0 ){
+            return headers.data_inodes[index];
+        }
+
+        bool load_data_block(BlockType block, DataInode *inoded){
+            if ( block == 0 ){
                 return false;
             }
-            file.seekg(inode_block * BLOCK_SIZE);
+            file.seekg(block * BLOCK_SIZE);
             file.read(reinterpret_cast<char*>(inoded), sizeof(DataInode));
             return true;
         }
@@ -236,19 +244,24 @@ class File {
                 return 0;
             }
             size_t total_readed = 0; 
-            BlockType from_block = offset / BLOCK_DSIZE;
+            uint32_t ifrom_block = offset / BLOCK_DSIZE;
+            BlockType from_block = get_block_value(ifrom_block);
             uint16_t from_offset = offset % BLOCK_DSIZE;
             uint16_t remaining_size = size;
             uint16_t remaining_block;
             DataInode data;
 
             while (remaining_size > 0){
-                find_block(from_block, &data);
+                load_data_block(from_block, &data);
                 remaining_block = std::min(
                     static_cast<uint16_t>(data.current_size),
                     static_cast<uint16_t>(BLOCK_DSIZE - from_offset));
                 memcpy(buf + total_readed, data.data + from_offset, remaining_block);
-                from_block++;
+                ifrom_block++;
+                from_block = get_block_value(ifrom_block);
+                if ( from_block == 0 ){
+                    return total_readed;
+                }
                 from_offset = 0;
                 remaining_size -= remaining_block;
                 total_readed += remaining_block;
@@ -266,19 +279,25 @@ class File {
                 return 0;
             }
             size_t total_written = 0; 
-            BlockType from_block = offset / BLOCK_DSIZE;
+            uint32_t ind_from_block = offset / BLOCK_DSIZE;
+            BlockType from_block = get_block_value(ind_from_block);
             uint16_t from_offset = offset % BLOCK_DSIZE;
             uint16_t remaining_size = size;
             uint16_t remaining_block;
             DataInode data;
 
             while (remaining_size > 0){
-                if (!find_block(from_block, &data)){
-                    return write_extra(
+                if (!load_data_block(from_block, &data)){
+                    size_t extra_writted = write_extra(
                         remaining_size, 
                         buf + total_written,
                         bmanager
                     );
+                    total_written += extra_writted;
+                    fcb.blocks = total_written / BLOCK_DSIZE;
+                    fcb.size = fcb.blocks * BLOCK_DSIZE;
+                    update_fcb();
+                    return total_written;
                 }
                 remaining_block = std::min(
                     static_cast<uint16_t>(remaining_size),
@@ -288,8 +307,9 @@ class File {
                 data.current_size+=remaining_block;
                 file.seekp(from_block * BLOCK_SIZE);
                 file.write(reinterpret_cast<char*>(&data), sizeof(DataInode));
-                from_block++;
+                ind_from_block++;
                 from_offset = 0;
+                from_block = get_block_value(ind_from_block);
                 remaining_size -= remaining_block;
                 total_written += remaining_block;
 
@@ -297,11 +317,27 @@ class File {
             if (static_cast<off_t>(total_written / BLOCK_DSIZE) > fcb.blocks){
                 remove_unused_blocks(total_written / BLOCK_DSIZE, bmanager);
                 fcb.blocks = total_written / BLOCK_DSIZE;
-                file.seekp(fcb.id * BLOCK_SIZE);
-                file.write(reinterpret_cast<char*>(&fcb), sizeof(FcbInode));
+                fcb.size = fcb.blocks * BLOCK_DSIZE;
+                update_fcb();
             }
 
 
             return total_written;
         }
 };
+
+class Directory : public File {
+
+    Directory(
+        BlocksManager& bmanager,
+        struct fuse_file_info *fi,
+        const struct fuse_context *fc
+    ) :
+        File(bmanager, fi, fc)
+    {
+        fcb.type = FileType::TDIRECTORY;
+
+
+    }
+
+}
