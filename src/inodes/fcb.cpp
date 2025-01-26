@@ -3,6 +3,7 @@
 #include <functional>
 #include <fuse.h>
 #include <sys/types.h>
+#include <unordered_map>
 
 #include "fcb.hpp"
 
@@ -131,10 +132,10 @@ class File {
             }
             BlockType indirect_index;
             HeaderIndexs headers = fcb.headers;
-            while (last_used >= MAX_POINTERS-1){
+            do{
                 last_used -= MAX_POINTERS-1;
                 indirect_index = load_indirect(headers.single_indirect, &headers);
-            }      
+            } while (last_used >= MAX_POINTERS-1);     
             clean(last_used + 1, &headers);
             file.seekg(indirect_index * BLOCK_SIZE);
             file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
@@ -295,7 +296,7 @@ class File {
                     );
                     total_written += extra_writted;
                     fcb.blocks = total_written / BLOCK_DSIZE;
-                    fcb.size = fcb.blocks * BLOCK_DSIZE;
+                    fcb.size = total_written;
                     update_fcb();
                     return total_written;
                 }
@@ -314,19 +315,24 @@ class File {
                 total_written += remaining_block;
 
             }
-            if (static_cast<off_t>(total_written / BLOCK_DSIZE) > fcb.blocks){
+            if (static_cast<off_t>(total_written / BLOCK_DSIZE) < fcb.blocks){
                 remove_unused_blocks(total_written / BLOCK_DSIZE, bmanager);
                 fcb.blocks = total_written / BLOCK_DSIZE;
-                fcb.size = fcb.blocks * BLOCK_DSIZE;
-                update_fcb();
             }
+
+            fcb.size = total_written;
+            update_fcb();
 
 
             return total_written;
         }
 };
 
-class Directory : public File {
+class Directory : protected File {
+
+
+    private:
+        std::unordered_map<std::string, InodeType> entries;
 
     Directory(
         BlocksManager& bmanager,
@@ -336,7 +342,19 @@ class Directory : public File {
         File(bmanager, fi, fc)
     {
         fcb.type = FileType::TDIRECTORY;
+    }
 
+    Directory(const struct fuse_file_info *fi) : File(fi) {
+        char *buf = new char[fcb.size];
+        read(0, fcb.size, buf);
+        int index = 0;
+        while (index < fcb.size){
+            
+        }
+    }
+
+
+    bool create_file(const char *name){
 
     }
 
