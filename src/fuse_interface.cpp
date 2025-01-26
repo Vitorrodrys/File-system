@@ -3,9 +3,10 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fuse.h>
 
 #include "env.hpp"
-#include "fuse.hpp"
+#include "fuse_interface.hpp"
 
 
 const Env& envs = Env::get_instance();
