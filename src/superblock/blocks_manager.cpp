@@ -6,8 +6,7 @@
 #include "blocks_manager.hpp"
 #include "../env.hpp"
 
-#include "../block_operations.hpp"
-
+#define MANAGER_INODE_NUMBER 1
 const Env& envs = Env::get_instance();
 
 void BlocksManager :: init(){
@@ -33,6 +32,7 @@ BlocksManager :: BlocksManager(){
     if (!infile) {
         throw std::runtime_error("Could not open file " + path);
     }
+    infile.seekg(MANAGER_INODE_NUMBER * BLOCK_SIZE);
     this->free_blocks = new BlockType[envs.block_quantity];
     infile.read(reinterpret_cast<char*>(&this->first), sizeof(BlockType));
     infile.read(reinterpret_cast<char*>(this->free_blocks), static_cast<std::streamsize>(envs.block_quantity * sizeof(BlockType)));
@@ -68,6 +68,7 @@ void BlocksManager :: save() const{
     if (!outfile) {
         throw std::runtime_error("Could not open file " + path);
     }
+    outfile.seekp(MANAGER_INODE_NUMBER * BLOCK_SIZE);
     outfile.write(reinterpret_cast<const char*>(&this->first), sizeof(BlockType));
     outfile.write(reinterpret_cast<const char*>(this->free_blocks), static_cast<std::streamsize>(envs.block_quantity * sizeof(BlockType)));
     outfile.write(reinterpret_cast<const char*>(&this->last), sizeof(BlockType));
