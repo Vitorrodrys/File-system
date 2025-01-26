@@ -47,7 +47,7 @@ Directory::Directory(InodeType id) : File(id) {
 }
 
 
-bool Directory::create_entry(const std::string& key, InodeType inode, BlocksManager& bmanager) {
+bool Directory::create_entry(const std::string& key, InodeType inode) {
     if (entries.find(key) != entries.end()) {
         return false;
     }
@@ -55,7 +55,7 @@ bool Directory::create_entry(const std::string& key, InodeType inode, BlocksMana
     return true;
 }
 
-BlockType Directory::remove_entry(const std::string& key, BlocksManager& bmanager) {
+BlockType Directory::remove_entry(const std::string& key) {
     if (entries.find(key) == entries.end()) {
         return 0;
     }

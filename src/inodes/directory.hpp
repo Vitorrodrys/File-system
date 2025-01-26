@@ -19,8 +19,8 @@ class Directory : protected File {
     public:
         explicit Directory(BlocksManager& bmanager, struct fuse_file_info* fi, const struct fuse_context* fc);
         explicit Directory(InodeType id);
-        bool create_entry(const std::string& key, InodeType inode, BlocksManager& bmanager);
-        BlockType remove_entry(const std::string& key, BlocksManager& bmanager);
+        bool create_entry(const std::string& key, InodeType inode);
+        BlockType remove_entry(const std::string& key);
         InodeType get_inode(const std::string& key);
         void flush(BlocksManager& bmanager);
 };
