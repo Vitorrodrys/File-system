@@ -8,8 +8,6 @@
 #include "fcb.hpp"
 
 #include "../env.hpp"
-#include "../superblock/blocks_manager.hpp"
-#include "../superblock/types.hpp"
 
 #define MAX_POINTERS 12
 #define BLOCK_DSIZE (BLOCK_SIZE - sizeof(unsigned short))
@@ -345,14 +343,24 @@ class Directory : protected File {
     }
 
     Directory(const struct fuse_file_info *fi) : File(fi) {
-        char *buf = new char[fcb.size];
-        read(0, fcb.size, buf);
-        int index = 0;
-        while (index < fcb.size){
-            
-        }
+    char *buf = new char[fcb.size];
+    read(0, fcb.size, buf);
+    
+    int index = 0;
+
+    while (index < fcb.size) {
+        std::string key(buf + index);
+        index += key.length() + 1;
+
+        std::string inode_str(buf + index);
+        index += inode_str.length() + 1;
+
+        // Converte o inode para inteiro e adiciona ao mapa
+        entries[key] = static_cast<InodeType>(std::stoi(inode_str));
     }
 
+    delete[] buf;  // Libera o buffer após o uso
+}
 
     bool create_file(const char *name){
 
