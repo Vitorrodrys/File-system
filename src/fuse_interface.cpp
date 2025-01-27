@@ -1,15 +1,14 @@
 #define FUSE_USE_VERSION 31
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fuse.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "env.hpp"
 #include "fuse_interface.hpp"
 
-
-const Env& envs = Env::get_instance();
+const Env &envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
     if (strcmp(path, "/teste.txt") != 0) {
         return -ENOENT; // Arquivo não encontrado
@@ -20,8 +19,7 @@ int open(const char *path, struct fuse_file_info *fi) {
     return 0; // Sucesso
 }
 
-
-struct fuse_operations * build_fuse_operations(){
+struct fuse_operations *build_fuse_operations() {
     static struct fuse_operations fuse_op = (struct fuse_operations){
         .open = open,
         .lookup = NULL,

@@ -1,7 +1,7 @@
 #include "common_operations.hpp"
 
-InodeType get_inode(const std::string& path, DEntry& dentry){
-    if(dentry.exists(path)){
+InodeType get_inode(const std::string &path, DEntry &dentry) {
+    if (dentry.exists(path)) {
         return dentry.get_inode(path);
     }
     std::istringstream stream(path);
@@ -11,24 +11,24 @@ InodeType get_inode(const std::string& path, DEntry& dentry){
     std::getline(stream, token, '/');
     std::getline(stream, token, '/');
 
-    while (true){
+    while (true) {
         subpath += token;
-        if(!dentry.exists(subpath)){
+        if (!dentry.exists(subpath)) {
             break;
         }
         last_inode = dentry.get_inode(subpath);
         std::getline(stream, token, '/');
     }
 
-    while ( true ){
+    while (true) {
         Directory dir(last_inode);
         last_inode = dir.get_inode(token);
-        if (last_inode == 0){
+        if (last_inode == 0) {
             return 0;
         }
         dentry.add_entry(subpath, last_inode);
         std::getline(stream, token, '/');
-        if (token.empty()){
+        if (token.empty()) {
             return last_inode;
         }
         subpath += "/" + token;

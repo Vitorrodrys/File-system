@@ -1,7 +1,6 @@
 #include "superblock/blocks_manager.hpp"
 
-
-int main(){
+int main() {
 
     BlocksManager manager;
     InodeType a = manager.get_free_block();
