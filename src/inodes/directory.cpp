@@ -15,18 +15,6 @@ Directory::Directory(
     fcb.type = FileType::TDIRECTORY;
 }
 
-std::vector<unsigned char> Directory::serialize_entries() {
-    std::vector<unsigned char> buffer;
-    for (auto& entry : entries) {
-        buffer.insert(buffer.end(), entry.first.begin(), entry.first.end());
-        buffer.push_back('\0');
-
-        std::string entry_str = std::to_string(entry.second);
-        buffer.insert(buffer.end(), entry_str.begin(), entry_str.end());
-        buffer.push_back('\0');
-    }
-    return buffer;
-}
 Directory::Directory(InodeType id) : File(id) {
     char *buf = new char[fcb.size];
     read(0, fcb.size, buf);
@@ -46,6 +34,18 @@ Directory::Directory(InodeType id) : File(id) {
     delete[] buf;
 }
 
+std::vector<unsigned char> Directory::serialize_entries() {
+    std::vector<unsigned char> buffer;
+    for (auto& entry : entries) {
+        buffer.insert(buffer.end(), entry.first.begin(), entry.first.end());
+        buffer.push_back('\0');
+
+        std::string entry_str = std::to_string(entry.second);
+        buffer.insert(buffer.end(), entry_str.begin(), entry_str.end());
+        buffer.push_back('\0');
+    }
+    return buffer;
+}
 
 bool Directory::create_entry(const std::string& key, InodeType inode) {
     if (entries.find(key) != entries.end()) {
