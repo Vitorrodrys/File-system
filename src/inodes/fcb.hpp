@@ -62,9 +62,15 @@ class File {
         size_t write_extra(size_t size, const char* buf, BlocksManager& bmanager);
 
     public:
-        explicit File(BlocksManager& bmanager, struct fuse_file_info* fi, const struct fuse_context* fc);
+        explicit File(
+            BlocksManager& bmanager, struct fuse_file_info* fi,
+            const struct fuse_context* fc, FileType type = FileType::TFILE
+        );
         explicit File(InodeType id);
+        explicit File(const File &other);
 
+        FileType get_type() const;
+        off_t get_size() const;
         size_t read(off_t offset, size_t size, char* buf);
         size_t write(off_t offset, size_t size, const char* buf, BlocksManager& bmanager);
 };

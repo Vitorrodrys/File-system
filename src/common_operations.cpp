@@ -21,7 +21,15 @@ InodeType get_inode(const std::string &path, DEntry &dentry) {
     }
 
     while (true) {
-        Directory dir(last_inode);
+        File dir(last_inode);
+        stream = std::getline(stream, token, '/');
+        if (dir.get_type() == FileType::TFILE and !std::getline(stream, token, '/')) {
+            return last_inode;
+        }else if (dir.get_type() == FileType::TFILE and ) {
+            return -1;
+        }else{
+            return -2;
+        }
         last_inode = dir.get_inode(token);
         if (last_inode == 0) {
             return 0;

@@ -19,8 +19,12 @@ bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
     return false;
 }
 
-File::File(BlocksManager &bmanager, struct fuse_file_info *fi,
-           const struct fuse_context *fc)
+File::File(
+    BlocksManager &bmanager,
+    struct fuse_file_info *fi,
+    const struct fuse_context *fc,
+    FileType type = FileType::TFILE
+)
     : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb([&]() -> FcbInode {
           InodeType id = bmanager.get_free_block();
@@ -29,7 +33,7 @@ File::File(BlocksManager &bmanager, struct fuse_file_info *fi,
           temp.id = id;
           temp.size = BLOCK_SIZE;
           temp.blocks = 1;
-          temp.type = FileType::TFILE;
+          temp.type = type;
           temp.owner = fc->uid;
           temp.group = fc->gid;
           temp.permissions = 0644;
@@ -44,12 +48,19 @@ File::File(BlocksManager &bmanager, struct fuse_file_info *fi,
 
 File::File(InodeType id)
     : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
-      fcb([&]() -> FcbInode {
-          FcbInode temp;
-          file.seekg(id * BLOCK_SIZE);
-          file.read(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
-          return temp;
-      }()) {}
+        fcb(
+            [&]() -> FcbInode {
+                FcbInode temp;
+                file.seekg(id * BLOCK_SIZE);
+                file.read(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
+                return temp;
+            }()
+        ) {}
+
+File::File(const File &other)
+    : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+      fcb(other.fcb) {}
+
 
 void File::update_fcb() {
     file.seekp(fcb.id * BLOCK_SIZE);
@@ -252,4 +263,11 @@ size_t File::write(off_t offset, size_t size, const char *buf,
     update_fcb();
 
     return total_written;
+}
+
+FileType File::get_type() const { 
+    return fcb.type; 
+}
+off_t File::get_size() const { 
+    return fcb.size; 
 }

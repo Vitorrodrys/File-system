@@ -4,19 +4,27 @@
 
 const Env &env = Env::get_instance();
 
-Directory::Directory(BlocksManager &bmanager, struct fuse_file_info *fi,
-                     const struct fuse_context *fc)
-    : File(bmanager, fi, fc) {
-    fcb.type = FileType::TDIRECTORY;
+Directory::Directory(
+    BlocksManager &bmanager,
+    struct fuse_file_info *fi,
+    const struct fuse_context *fc
+) : file(bmanager, fi, fc, FileType::TDIRECTORY) {}
+
+Directory::Directory(InodeType id) : file(id) {
+    load_entries();
+}
+Directory::Directory(File &file) : file(file) {
+    load_entries();
 }
 
-Directory::Directory(InodeType id) : File(id) {
-    char *buf = new char[fcb.size];
-    read(0, fcb.size, buf);
+void Directory::load_entries(){
+    off_t file_size = file.get_size();
+    char *buf = new char[file_size];
+    file.read(0, file_size, buf);
 
     int index = 0;
 
-    while (index < fcb.size) {
+    while (index < file_size) {
         std::string key(buf + index);
         index += key.length() + 1;
 
@@ -28,7 +36,6 @@ Directory::Directory(InodeType id) : File(id) {
 
     delete[] buf;
 }
-
 std::vector<unsigned char> Directory::serialize_entries() {
     std::vector<unsigned char> buffer;
     for (auto &entry : entries) {
@@ -60,7 +67,7 @@ InodeType Directory::remove_entry(const std::string &key) {
 }
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
-    write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
+    file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
 }
 
 InodeType Directory::get_inode(const std::string &key) {
