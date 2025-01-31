@@ -59,7 +59,7 @@ bool Directory::create_entry(const std::string &key, InodeType inode) {
 
 InodeType Directory::remove_entry(const std::string &key) {
     if (entries.find(key) == entries.end()) {
-        return 0;
+        return NOTFOUNDERROR;
     }
     InodeType inode = entries[key];
     entries.erase(key);
@@ -72,7 +72,7 @@ void Directory::flush(BlocksManager &bmanager) {
 
 InodeType Directory::get_inode(const std::string &key) {
     if (entries.find(key) == entries.end()) {
-        return 0;
+        return NOTFOUNDERROR;
     }
     return entries[key];
 }
