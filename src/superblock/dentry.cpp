@@ -13,6 +13,11 @@ DEntry ::DEntry() {
     this->add_entry("/", envs.inode_slash);
 }
 
+DEntry::DEntry(const DEntry &other){
+    this->inode_map = other.inode_map;
+    this->quantity_entries = other.quantity_entries;
+}
+
 DEntry ::~DEntry() { this->inode_map.clear(); }
 
 bool DEntry ::exists(const std::string &path) const {

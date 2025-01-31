@@ -7,6 +7,12 @@
 
 #include "env.hpp"
 #include "fuse_interface.hpp"
+#include "superblock/blocks_manager.hpp"
+#include "superblock/path_handler.hpp"
+
+
+BlocksManager bmanager();
+PathHandler path_handler(DEntry());
 
 const Env &envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
