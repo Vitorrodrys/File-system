@@ -6,6 +6,8 @@
 
 PathHandler::PathHandler(DEntry &dentry) : dentry(dentry) {}
 
+PathHandler::PathHandler() : dentry(DEntry()) {}
+
 InodeType PathHandler::get_inode(const std::string &path) {
     if (dentry.exists(path)) {
         return dentry.get_inode(path);

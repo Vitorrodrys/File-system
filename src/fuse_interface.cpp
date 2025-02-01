@@ -11,8 +11,8 @@
 #include "superblock/path_handler.hpp"
 
 
-BlocksManager bmanager();
-PathHandler path_handler(DEntry());
+BlocksManager bmanager = BlocksManager();
+PathHandler path_handler = PathHandler();
 
 const Env &envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {

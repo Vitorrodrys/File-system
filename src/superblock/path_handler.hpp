@@ -11,10 +11,11 @@
 class PathHandler {
 
     private:
-        DEntry& dentry;
+        DEntry dentry;
 
     public:
-        PathHandler(DEntry& dentry);
+        explicit PathHandler(DEntry& dentry);
+        explicit PathHandler();
         InodeType get_inode(const std::string& path);
         InodeType remove_inode(const std::string& path, BlocksManager& bmanager);
 };
