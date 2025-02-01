@@ -1,7 +1,11 @@
+#ifndef BLOCKS_MANAGER_HPP
+#define BLOCKS_MANAGER_HPP
+
 #include <string>
 
+#include "types.hpp"
 
-typedef unsigned long long int InodeType;
+#include "../env.hpp"
 
 const InodeType END_OF_LIST = Env::get_instance().block_quantity+1;
 const InodeType OCCUPIED = Env::get_instance().block_quantity+2;
@@ -9,9 +13,9 @@ const InodeType OCCUPIED = Env::get_instance().block_quantity+2;
 class BlocksManager {
 
     private:
-        InodeType first;
-        InodeType last;
-        InodeType* free_blocks;
+        BlockType first;
+        BlockType last;
+        BlockType* free_blocks;
 
         void init();
 
@@ -25,3 +29,5 @@ class BlocksManager {
         void save() const;
 
 };
+
+#endif

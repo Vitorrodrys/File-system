@@ -1,16 +1,17 @@
+#ifndef DENTRY_HPP
+#define DENTRY_HPP
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <string>
 
-#ifndef DENTRY_HPP
-#define DENTRY_HPP
 
-typedef unsigned long long int InodeType;
+#include "types.hpp"
 
 class DEntry {
     public:
         explicit DEntry();
+        DEntry(const DEntry &other);
         ~DEntry();
  
 
