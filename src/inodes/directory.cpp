@@ -8,7 +8,7 @@ Directory::Directory(
     BlocksManager &bmanager,
     struct fuse_file_info *fi,
     const struct fuse_context *fc
-) : file(bmanager, fi, fc, FileType::TDIRECTORY) {}
+) : file(bmanager, fc, FileType::TDIRECTORY) {}
 
 Directory::Directory(InodeType id) : file(id) {
     load_entries();

@@ -70,7 +70,7 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
         return -EBADF;
     }
     InodeType inode_new_path= path_handler.get_inode(newpath);
-    InodeType inode_remov_path=path_handler.remove_inode(path,bmanager);
+    InodeType inode_remov_path=path_handler.remove_path(path,bmanager);
 
     if (flags == RENAME_NOREPLACE) {
         if (inode_new_path != NOTFOUNDERROR) {
@@ -86,7 +86,7 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
         if (inode_new_path == NOTFOUNDERROR) {
             return -ENOENT;
         }
-        InodeType inode_remov_newpath=path_handler.remove_inode(newpath,bmanager);
+        InodeType inode_remov_newpath=path_handler.remove_path(newpath,bmanager);
         path_handler.add_path(newpath, inode_remov_path);
         path_handler.add_path(path, inode_remov_newpath);
 
