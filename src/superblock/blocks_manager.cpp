@@ -39,7 +39,7 @@ BlocksManager ::BlocksManager() {
     infile.read(reinterpret_cast<char *>(&this->last), sizeof(BlockType));
 }
 
-BlocksManager::BlocksManager(const BlocksManager &other) {
+BlocksManager BlocksManager::operator=(const BlocksManager &other) {
     this->first = other.first;
     this->last = other.last;
     this->free_blocks = new BlockType[envs.block_quantity];

@@ -16,6 +16,7 @@ class PathHandler {
     public:
         explicit PathHandler(DEntry& dentry);
         explicit PathHandler();
+        PathHandler operator=(const PathHandler& other);
         InodeType get_inode(const std::string& path);
 
         /* Delete a path from dentry, and remove the last subpath of the path from
@@ -25,6 +26,6 @@ class PathHandler {
             bmanager: BlocksManager -> a reference to the blocks manager object
         */
         InodeType remove_path(const std::string& path, BlocksManager& bmanager);
-        bool PathHandler:: add_path(const std::string &path,InodeType inode) ;
+        bool add_path(const std::string &path,InodeType inode) ;
 };
 #endif
