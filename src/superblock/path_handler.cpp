@@ -44,10 +44,15 @@ InodeType PathHandler::get_inode(const std::string &path) {
     }
 }
 
-InodeType PathHandler::remove_inode(const std::string &path, BlocksManager &bmanager) {
+InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmanager) {
     
-    std::regex last_path_part("[^/]+$");
-    std::string parent = std::regex_replace(path, last_path_part, "");
+    std::regex regex(R"(^(.*)/([^/]+)$)");
+    std::smatch match;
+
+    std::regex_search(path, match, regex);
+
+    std::string parent = match[1]; // catch the parent directory of the path
+    std::string child = match[2]; // catch the last child of path
     InodeType parent_inode;
 
     if (dentry.remove_entry(path)){
@@ -56,7 +61,7 @@ InodeType PathHandler::remove_inode(const std::string &path, BlocksManager &bman
         parent_inode = get_inode(parent);
     }
     Directory dir(parent_inode);
-    InodeType removed = dir.remove_entry(path);
+    InodeType removed = dir.remove_entry(child);
     if (removed == NOTFOUNDERROR) {
         return NOTFOUNDERROR;
     }
