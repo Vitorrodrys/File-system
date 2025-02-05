@@ -63,7 +63,7 @@ class File {
 
     public:
         explicit File(
-            BlocksManager& bmanager, struct fuse_file_info* fi,
+            BlocksManager& bmanager,
             const struct fuse_context* fc, FileType type = FileType::TFILE
         );
         explicit File(InodeType id);
