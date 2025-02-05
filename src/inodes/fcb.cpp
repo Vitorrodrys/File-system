@@ -271,3 +271,6 @@ FileType File::get_type() const {
 off_t File::get_size() const { 
     return fcb.size; 
 }
+InodeType File::get_inode() const{
+    return fcb.id;
+}
