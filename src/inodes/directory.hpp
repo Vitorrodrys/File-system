@@ -26,6 +26,19 @@ class Directory {
         InodeType get_entry(const std::string& key);
         InodeType get_inode();
         void flush(BlocksManager& bmanager);
+
+        // Allow iterate by directory entries
+        using Iterator = std::unordered_map<std::string, InodeType>::iterator;
+        using ConstIterator = std::unordered_map<std::string, InodeType>::const_iterator;
+
+        Iterator begin() { return entries.begin(); }
+        Iterator end() { return entries.end(); }
+
+        ConstIterator begin() const { return entries.begin(); }
+        ConstIterator end() const { return entries.end(); }
+
+        ConstIterator cbegin() const { return entries.cbegin(); }
+        ConstIterator cend() const { return entries.cend(); }
 };
 
 

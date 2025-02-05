@@ -73,6 +73,12 @@ class File {
 
         FileType get_type() const;
         off_t get_size() const;
+        mode_t get_permissions() const { return fcb.permissions; }
+        gid_t get_group_id() const { return fcb.group; }
+        uid_t get_owner_id() const { return fcb.owner; }
+        time_t get_created_at() const { return fcb.created_at; }
+        time_t get_modified_at() const { return fcb.modified_at; }
+        time_t get_accessed_at() const { return fcb.accessed_at; }
         InodeType get_inode() const;
         size_t read(off_t offset, size_t size, char* buf);
         size_t write(off_t offset, size_t size, const char* buf, BlocksManager& bmanager);
