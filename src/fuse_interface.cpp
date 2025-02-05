@@ -3,32 +3,111 @@
 #include <fcntl.h>
 #include <fuse.h>
 #include <stdio.h>
-#include <string.h>
+#include <regex>
 
 #include "env.hpp"
 #include "fuse_interface.hpp"
 #include "superblock/blocks_manager.hpp"
 #include "superblock/path_handler.hpp"
-
+#include "superblock/types.hpp"
+#include "inodes/fcb.hpp"
 
 BlocksManager bmanager = BlocksManager();
 PathHandler path_handler = PathHandler();
 
 const Env &envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
-    if (strcmp(path, "/teste.txt") != 0) {
-        return -ENOENT; // Arquivo não encontrado
+    InodeType inode=path_handler.get_inode(path);
+
+    if (inode == NOTFOUNDERROR || inode == NOTADIRECTORYERROR ){
+
+        const struct fuse_context *context = fuse_get_context();
+        File file= File(bmanager,context);
+        fi->fh=  file.get_inode();
+
+        return 0;
     }
-    if ((fi->flags & O_ACCMODE) != O_RDONLY) {
-        return -EACCES; // Somente leitura
-    }
-    return 0; // Sucesso
+
+    File file= File(inode);
+    fi->fh=  file.get_inode();
+
+    return  0;
 }
+int read (const char * path, char *buffer, size_t  size_bytes, off_t offset,struct fuse_file_info *fi) {
+    InodeType inode=path_handler.get_inode(path);
+
+    if (inode == NOTFOUNDERROR ) {
+        return  -EBADF;
+    }
+
+    File file= File(inode) ;
+    size_t size =file.read(offset,size_bytes,buffer);
+
+    if (!file.read(offset,size_bytes,buffer)) {
+        return -EIO;
+    }
+    return  (int) size;
+}
+int write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    InodeType inode=path_handler.get_inode(path);
+
+    if (inode == NOTFOUNDERROR) {
+        return  -EBADF;
+    }
+    File file=File(inode);
+    size_t size_bytes=file.write(offset,size,buf,bmanager);
+
+    if (!size_bytes) {
+        return -EIO;
+    }
+    return (int) size_bytes;
+}
+
+int rename (const char *path, const char * newpath, unsigned int flags) {
+    InodeType inode=path_handler.get_inode(path);
+
+    if (inode == NOTFOUNDERROR){
+        return -EBADF;
+    }
+    InodeType inode_new_path= path_handler.get_inode(newpath);
+    InodeType inode_remov_path=path_handler.remove_inode(path,bmanager);
+
+    if (flags == RENAME_NOREPLACE) {
+        if (inode_new_path != NOTFOUNDERROR) {
+            return -EEXIST;
+        }
+
+        path_handler.add_path(newpath, inode_remov_path);
+        return 0;
+    }
+
+
+    if (flags == RENAME_EXCHANGE ){
+        if (inode_new_path == NOTFOUNDERROR) {
+            return -ENOENT;
+        }
+        InodeType inode_remov_newpath=path_handler.remove_inode(newpath,bmanager);
+        path_handler.add_path(newpath, inode_remov_path);
+        path_handler.add_path(path, inode_remov_newpath);
+
+        return 0;
+    }
+
+
+}
+
+
+
+
+
 
 struct fuse_operations *build_fuse_operations() {
     static struct fuse_operations fuse_op = (struct fuse_operations){
         .open = open,
-        .lookup = NULL,
+        .read = read,
+        .write = write,
+        .rename = rename,
+
     };
     return &fuse_op;
 }
