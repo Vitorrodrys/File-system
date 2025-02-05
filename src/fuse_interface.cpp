@@ -19,16 +19,16 @@ const Env &envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
     InodeType inode=path_handler.get_inode(path);
 
-    if (inode == NOTFOUNDERROR || inode == NOTADIRECTORYERROR ){
+    if (inode == NOTFOUNDERROR ){
 
         const struct fuse_context *context = fuse_get_context();
-        File file= File(bmanager,context);
+        File file(bmanager,context); // when the file still not exists, then it should be created
         fi->fh=  file.get_inode();
 
         return 0;
     }
 
-    File file= File(inode);
+    File file(inode);
     fi->fh=  file.get_inode();
 
     return  0;
@@ -63,12 +63,12 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
         return -EBADF;
     }
     InodeType inode_new_path= path_handler.get_inode(newpath);
-    InodeType inode_remov_path=path_handler.remove_path(path,bmanager);
 
     if (flags == RENAME_NOREPLACE) {
         if (inode_new_path != NOTFOUNDERROR) {
             return -EEXIST;
         }
+        InodeType inode_remov_path=path_handler.remove_path(path,bmanager);
 
         path_handler.add_path(newpath, inode_remov_path);
         return 0;
@@ -79,6 +79,7 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
         if (inode_new_path == NOTFOUNDERROR) {
             return -ENOENT;
         }
+        InodeType inode_remov_path=path_handler.remove_path(path,bmanager);
         InodeType inode_remov_newpath=path_handler.remove_path(newpath,bmanager);
         path_handler.add_path(newpath, inode_remov_path);
         path_handler.add_path(path, inode_remov_newpath);
