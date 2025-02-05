@@ -21,7 +21,6 @@ bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
 
 File::File(
     BlocksManager &bmanager,
-    struct fuse_file_info *fi,
     const struct fuse_context *fc,
     FileType type = FileType::TFILE
 )
@@ -39,7 +38,7 @@ File::File(
           temp.permissions = 0644;
           temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
 
-          fi->fh = id;
+
           file.seekg(id * BLOCK_SIZE);
           file.write(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
 
