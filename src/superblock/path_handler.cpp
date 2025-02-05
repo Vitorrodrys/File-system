@@ -4,8 +4,12 @@
 
 
 
-PathHandler PathHandler::operator=(const PathHandler &other) {
+PathHandler& PathHandler::operator=(const PathHandler &other) {
+    if ( this == &other ){
+        return *this;
+    }
     this->dentry = other.dentry;
+    return *this;
 }
 PathHandler::PathHandler(DEntry &dentry) : dentry(dentry) {}
 

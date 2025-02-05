@@ -16,7 +16,7 @@ class PathHandler {
     public:
         explicit PathHandler(DEntry& dentry);
         explicit PathHandler();
-        PathHandler operator=(const PathHandler& other);
+        PathHandler& operator=(const PathHandler& other);
         InodeType get_inode(const std::string& path);
 
         /* Delete a path from dentry, and remove the last subpath of the path from

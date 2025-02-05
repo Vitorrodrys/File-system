@@ -20,7 +20,7 @@ class BlocksManager {
         void init();
 
     public:
-        BlocksManager operator=(const BlocksManager& other);
+        BlocksManager& operator=(const BlocksManager& other);
         explicit BlocksManager();
         ~BlocksManager();
 
