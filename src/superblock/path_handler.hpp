@@ -17,7 +17,14 @@ class PathHandler {
         explicit PathHandler(DEntry& dentry);
         explicit PathHandler();
         InodeType get_inode(const std::string& path);
-        InodeType remove_inode(const std::string& path, BlocksManager& bmanager);
+
+        /* Delete a path from dentry, and remove the last subpath of the path from
+        your parent directory, returns the inode corresponding to the path erased
+         args:
+            path: string -> a path to file that you want to delete
+            bmanager: BlocksManager -> a reference to the blocks manager object
+        */
+        InodeType remove_path(const std::string& path, BlocksManager& bmanager);
         bool PathHandler:: add_path(const std::string &path,InodeType inode) ;
 };
 #endif
