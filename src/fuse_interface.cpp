@@ -34,13 +34,9 @@ int open(const char *path, struct fuse_file_info *fi) {
     return  0;
 }
 int read (const char * path, char *buffer, size_t  size_bytes, off_t offset,struct fuse_file_info *fi) {
-    InodeType inode=path_handler.get_inode(path);
+    InodeType inode = fi->fh;
 
-    if (inode == NOTFOUNDERROR ) {
-        return  -EBADF;
-    }
-
-    File file= File(inode) ;
+    File file(inode) ;
     size_t size =file.read(offset,size_bytes,buffer);
 
     if (!file.read(offset,size_bytes,buffer)) {
@@ -49,12 +45,9 @@ int read (const char * path, char *buffer, size_t  size_bytes, off_t offset,stru
     return  (int) size;
 }
 int write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-    InodeType inode=path_handler.get_inode(path);
+    InodeType inode=fi->fh;
 
-    if (inode == NOTFOUNDERROR) {
-        return  -EBADF;
-    }
-    File file=File(inode);
+    File file(inode);
     size_t size_bytes=file.write(offset,size,buf,bmanager);
 
     if (!size_bytes) {
