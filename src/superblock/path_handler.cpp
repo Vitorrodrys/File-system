@@ -31,7 +31,7 @@ InodeType PathHandler::get_inode(const std::string &path) {
     while (true) {
         File file(last_inode);
         if (file.get_type() != FileType::TDIRECTORY) {
-            return (stream.eof()) ? last_inode : NOTADIRECTORYERROR;
+            return (stream.eof()) ? last_inode : NOTFOUNDERROR;
         }
         Directory dir(file);
         last_inode = dir.get_inode(token);
@@ -68,4 +68,27 @@ InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmana
     dir.flush(bmanager);
     return removed;
 
+}
+
+
+bool PathHandler:: add_path(const std::string &path,InodeType inode) {
+
+    std::regex regex(R"(^(.*)/([^/]+)$)");
+    std::smatch match;
+
+    std::regex_search(path, match, regex);
+
+    const std::string parent = match[1];
+    const std::string child = match[2];
+
+    const InodeType inode_parent =get_inode(parent);
+    if (inode_parent == NOTFOUNDERROR) {
+        return false;
+    }
+
+    Directory dir(inode_parent);
+    dir.create_entry(child, inode);
+    dentry.add_entry(path, inode);
+
+     return true;
 }
