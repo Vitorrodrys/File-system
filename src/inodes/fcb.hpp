@@ -64,7 +64,9 @@ class File {
     public:
         explicit File(
             BlocksManager& bmanager,
-            const struct fuse_context* fc, FileType type = FileType::TFILE
+            mode_t mode,
+            const struct fuse_context* fc,
+            FileType type = FileType::TFILE
         );
         explicit File(InodeType id);
         explicit File(const File &other);

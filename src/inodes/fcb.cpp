@@ -21,6 +21,7 @@ bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
 
 File::File(
     BlocksManager &bmanager,
+    mode_t mode,
     const struct fuse_context *fc,
     FileType type = FileType::TFILE
 )
@@ -35,7 +36,7 @@ File::File(
           temp.type = type;
           temp.owner = fc->uid;
           temp.group = fc->gid;
-          temp.permissions = 0644;
+          temp.permissions = mode;
           temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
 
 

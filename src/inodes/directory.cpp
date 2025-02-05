@@ -6,9 +6,9 @@ const Env &env = Env::get_instance();
 
 Directory::Directory(
     BlocksManager &bmanager,
-    struct fuse_file_info *fi,
+    mode_t permissions,
     const struct fuse_context *fc
-) : file(bmanager, fc, FileType::TDIRECTORY) {}
+) : file(bmanager, permissions, fc, FileType::TDIRECTORY) {}
 
 Directory::Directory(InodeType id) : file(id) {
     load_entries();
@@ -70,9 +70,13 @@ void Directory::flush(BlocksManager &bmanager) {
     file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
 }
 
-InodeType Directory::get_inode(const std::string &key) {
+InodeType Directory::get_entry(const std::string &key) {
     if (entries.find(key) == entries.end()) {
         return NOTFOUNDERROR;
     }
     return entries[key];
+}
+
+InodeType Directory::get_inode() {
+    return file.get_inode();
 }

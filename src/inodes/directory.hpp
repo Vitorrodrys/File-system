@@ -18,12 +18,13 @@ class Directory {
         void load_entries();
 
     public:
-        explicit Directory(BlocksManager& bmanager, struct fuse_file_info* fi, const struct fuse_context* fc);
+        explicit Directory(BlocksManager& bmanager, mode_t permissions, const struct fuse_context* fc);
         explicit Directory(InodeType id);
         explicit Directory(File& file);
         bool create_entry(const std::string& key, InodeType inode);
         InodeType remove_entry(const std::string& key);
-        InodeType get_inode(const std::string& key);
+        InodeType get_entry(const std::string& key);
+        InodeType get_inode();
         void flush(BlocksManager& bmanager);
 };
 

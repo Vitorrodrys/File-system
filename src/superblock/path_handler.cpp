@@ -41,7 +41,7 @@ InodeType PathHandler::get_inode(const std::string &path) {
             return (stream.eof()) ? last_inode : NOTFOUNDERROR;
         }
         Directory dir(file);
-        last_inode = dir.get_inode(token);
+        last_inode = dir.get_entry(token);
         if (last_inode == 0) {
             return NOTFOUNDERROR;
         }
