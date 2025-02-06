@@ -1,5 +1,6 @@
 #define FUSE_USE_VERSION 31
 #include <errno.h>
+#include <filesystem>
 #include <fcntl.h>
 #include <fuse.h>
 #include <fuse/fuse_common.h>
@@ -21,7 +22,7 @@
 BlocksManager bmanager = BlocksManager();
 PathHandler path_handler = PathHandler();
 
-const Env &envs = Env::get_instance();
+const Env &fuse_envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
     InodeType inode=path_handler.get_inode(path);
 
@@ -85,10 +86,7 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
 
         path_handler.add_path(newpath, inode_remov_path);
         return 0;
-    }
-
-
-    if (flags == RENAME_EXCHANGE ){
+    }else{
         if (inode_new_path == NOTFOUNDERROR) {
             return -ENOENT;
         }
@@ -184,6 +182,17 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
     return 0;
 }
 
+void *init(fuse_conn_info *conn){
+
+    if (std::filesystem::exists(fuse_envs.disk_file)) {
+        bmanager.load();
+    } else {
+        create_virtual_disk(fuse_envs.disk_file, fuse_envs.disk_size);
+        bmanager.build();
+        bmanager.save();
+    }
+
+}
 
 void destroy(void *private_data){
     bmanager.save();
@@ -226,6 +235,7 @@ struct fuse_operations *build_fuse_operations() {
     fuse_op.mkdir = mkdir;
     fuse_op.destroy = destroy;
     fuse_op.readdir = readdir;
+    fuse_op.init = init;
 
     return &fuse_op;
 }

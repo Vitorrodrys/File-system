@@ -17,9 +17,9 @@ class BlocksManager {
         BlockType last;
         BlockType* free_blocks;
 
-        void init();
-
     public:
+        void build();
+        void load();
         BlocksManager& operator=(const BlocksManager& other);
         explicit BlocksManager();
         ~BlocksManager();

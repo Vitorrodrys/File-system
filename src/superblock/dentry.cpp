@@ -5,12 +5,12 @@
 #include "blocks_manager.hpp"
 #include "dentry.hpp"
 
-const Env &envs = Env::get_instance();
+const Env &dc_envs = Env::get_instance();
 
 DEntry ::DEntry() {
     this->inode_map = std::unordered_map<std::string, InodeType>();
     this->quantity_entries = 0;
-    this->add_entry("/", envs.inode_slash);
+    this->add_entry("/", dc_envs.inode_slash);
 }
 
 DEntry::DEntry(const DEntry &other){

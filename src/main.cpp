@@ -5,5 +5,5 @@ int main(int argc, char *argv[]) {
 
     
     const struct fuse_operations *fuseop = build_fuse_operations();
-    return fuse_main(argc, argv, fuseop, nullptr);
+    return fuse_main(argc, argv, fuseop);
 }

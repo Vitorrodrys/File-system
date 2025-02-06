@@ -7,7 +7,7 @@
 #include "../env.hpp"
 #include "fcb.hpp"
 
-const Env &envs = Env::get_instance();
+const Env &fcb_envs = Env::get_instance();
 
 bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
     for (size_t i = 0; i < MAX_POINTERS - 1; i++) {
@@ -25,7 +25,7 @@ File::File(
     const struct fuse_context *fc,
     FileType type
 )
-    : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb([&]() -> FcbInode {
           InodeType id = bmanager.get_free_block();
           FcbInode temp;
@@ -47,7 +47,7 @@ File::File(
       }()) {}
 
 File::File(InodeType id)
-    : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
         fcb(
             [&]() -> FcbInode {
                 FcbInode temp;
@@ -58,7 +58,7 @@ File::File(InodeType id)
         ) {}
 
 File::File(const File &other)
-    : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb(other.fcb) {}
 
 

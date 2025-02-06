@@ -1,8 +1,5 @@
 #include "directory.hpp"
 
-#include "../env.hpp"
-
-const Env &env = Env::get_instance();
 
 Directory::Directory(
     BlocksManager &bmanager,
