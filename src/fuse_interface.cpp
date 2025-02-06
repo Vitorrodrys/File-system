@@ -2,9 +2,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fuse.h>
+#include <fuse/fuse_common.h>
+#include <fuse/fuse_lowlevel.h>
 #include <stdio.h>
 #include <regex>
 
+#include "commons.hpp"
 #include "env.hpp"
 #include "fuse_interface.hpp"
 #include "superblock/blocks_manager.hpp"
@@ -114,9 +117,71 @@ int mkdir (const char *dpath, mode_t mode){
 }
 
 
-void *destroy(void *private_data){
+int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,struct fuse_file_info *fi) {
+    InodeType inode=fi->fh;
+    File file(inode);
+    off_t position=2;
+    struct stat current_file_stat;
+
+    if (file.get_type() != FileType::TDIRECTORY ) {
+        return -ENOTDIR;
+    }
+    Directory dir(file);
+    if (offset != 0 ){
+        current_file_stat = (struct stat){
+            .st_mode = file.get_permissions(),
+            .st_gid = file.get_group_id(),
+            .st_uid = file.get_owner_id(),
+            .st_size = file.get_size(),
+            .st_atime = file.get_accessed_at(),
+            .st_mtime = file.get_modified_at(),
+            .st_ctime = file.get_created_at(),
+        };
+        filler(buf, ".", &current_file_stat, 1);
+
+        std::tuple<std::string, std::string> parent_and_children = separete_parent_and_children(path);
+        std::string parent = std::get<0>(parent_and_children);
+        InodeType parent_inode = path_handler.get_inode(parent);
+        File parent_file(parent_inode);
+        current_file_stat = (struct stat){
+            .st_mode = parent_file.get_permissions(),
+            .st_gid = parent_file.get_group_id(),
+            .st_uid = parent_file.get_owner_id(),
+            .st_size = parent_file.get_size(),
+            .st_atime = parent_file.get_accessed_at(),
+            .st_mtime = parent_file.get_modified_at(),
+            .st_ctime = parent_file.get_created_at(),
+        };
+
+        filler(buf, "..", &current_file_stat, 2);
+    }
+    for (auto it = dir.begin(); it != dir.end(); ++it) {
+        position++;
+        //ensure that we are respecting the offset given
+        if ( position < offset ){
+            continue;
+        }
+
+        File current(it->second);
+        current_file_stat.st_mode = current.get_permissions();
+        current_file_stat.st_gid = current.get_group_id();
+        current_file_stat.st_uid = current.get_owner_id();
+        current_file_stat.st_size = current.get_size();
+        current_file_stat.st_atime = current.get_accessed_at();
+        current_file_stat.st_mtime = current.get_modified_at();
+        current_file_stat.st_ctime = current.get_created_at();
+
+
+
+        filler(buf, it->first.c_str(), &current_file_stat, position);
+    }
+
+    return 0;
+
+}
+
+void destroy(void *private_data){
     bmanager.save();
-    return nullptr;
 }
 
 
@@ -153,7 +218,8 @@ struct fuse_operations *build_fuse_operations() {
         .mknod = mknod,
         .mkdir = mkdir,
         .destroy = destroy,
-        
+        .readdir = readdir,
+
 
     };
     return &fuse_op;
