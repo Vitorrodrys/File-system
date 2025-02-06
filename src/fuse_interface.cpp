@@ -116,59 +116,60 @@ int mkdir (const char *dpath, mode_t mode){
     return 0;
 }
 
-
-int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,struct fuse_file_info *fi) {
-    InodeType inode=fi->fh;
+int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+    InodeType inode = fi->fh;
     File file(inode);
-    off_t position=2;
-    struct stat current_file_stat;
+    off_t position = 2;
+    struct stat current_file_stat = {}; // Declare uma vez e inicialize com valores padrão
 
     if (file.get_type() != FileType::TDIRECTORY ) {
         return -ENOTDIR;
     }
     Directory dir(file);
-    if (offset != 0 ){
-        current_file_stat = {
-            .st_mode = file.get_permissions(),
-            .st_gid = file.get_group_id(),
-            .st_uid = file.get_owner_id(),
-            .st_size = file.get_size(),
-            .st_atime = file.get_accessed_at(),
-            .st_mtime = file.get_modified_at(),
-            .st_ctime = file.get_created_at(),
-            .st_nlink = 0,        // Número de links (padrão 0)
-            .st_ino = file.get_inode(),
-            .st_dev = 0,          // ID do dispositivo
-            .st_rdev = 0,         // ID do dispositivo especial
-            .st_blksize = 0,      // Tamanho do bloco preferido
-            .st_blocks = file.get_quantity_blocks()
-        };
+    if (offset != 0) {
+
+        current_file_stat.st_mode = file.get_permissions();
+        current_file_stat.st_gid = file.get_group_id();
+        current_file_stat.st_uid = file.get_owner_id();
+        current_file_stat.st_size = file.get_size();
+        current_file_stat.st_atime = file.get_accessed_at();
+        current_file_stat.st_mtime = file.get_modified_at();
+        current_file_stat.st_ctime = file.get_created_at();
+        current_file_stat.st_nlink = 0;
+        current_file_stat.st_ino = file.get_inode();
+        current_file_stat.st_dev = 0;
+        current_file_stat.st_rdev = 0;
+        current_file_stat.st_blksize = 0;
+        current_file_stat.st_blocks = file.get_quantity_blocks();
+
         filler(buf, ".", &current_file_stat, 1);
 
         std::tuple<std::string, std::string> parent_and_children = separete_parent_and_children(path);
         std::string parent = std::get<0>(parent_and_children);
         InodeType parent_inode = path_handler.get_inode(parent);
         File parent_file(parent_inode);
-        current_file_stat = (struct stat){
-            .st_mode = parent_file.get_permissions(),
-            .st_gid = parent_file.get_group_id(),
-            .st_uid = parent_file.get_owner_id(),
-            .st_size = parent_file.get_size(),
-            .st_atime = parent_file.get_accessed_at(),
-            .st_mtime = parent_file.get_modified_at(),
-            .st_ctime = parent_file.get_created_at(),
-        };
+
+
+        current_file_stat.st_mode = parent_file.get_permissions();
+        current_file_stat.st_gid = parent_file.get_group_id();
+        current_file_stat.st_uid = parent_file.get_owner_id();
+        current_file_stat.st_size = parent_file.get_size();
+        current_file_stat.st_atime = parent_file.get_accessed_at();
+        current_file_stat.st_mtime = parent_file.get_modified_at();
+        current_file_stat.st_ctime = parent_file.get_created_at();
 
         filler(buf, "..", &current_file_stat, 2);
     }
+
     for (auto it = dir.begin(); it != dir.end(); ++it) {
         position++;
-        //ensure that we are respecting the offset given
-        if ( position < offset ){
+        // Ensure that we are respecting the offset given
+        if (position < offset) {
             continue;
         }
 
         File current(it->second);
+
         current_file_stat.st_mode = current.get_permissions();
         current_file_stat.st_gid = current.get_group_id();
         current_file_stat.st_uid = current.get_owner_id();
@@ -177,14 +178,12 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,st
         current_file_stat.st_mtime = current.get_modified_at();
         current_file_stat.st_ctime = current.get_created_at();
 
-
-
         filler(buf, it->first.c_str(), &current_file_stat, position);
     }
 
     return 0;
-
 }
+
 
 void destroy(void *private_data){
     bmanager.save();
@@ -211,22 +210,22 @@ int rmdir (const char *path){
     }
     Directory directory(inode);
     directory.remove_entry(path);
-
+    return 0;
 }
 
 
 struct fuse_operations *build_fuse_operations() {
-    static struct fuse_operations fuse_op = (struct fuse_operations){
-        .open = open,
-        .read = read,
-        .write = write,
-        .rename = rename,
-        .mknod = mknod,
-        .mkdir = mkdir,
-        .destroy = destroy,
-        .readdir = readdir,
+    static struct fuse_operations fuse_op;
+    memset(&fuse_op, 0, sizeof(fuse_op));
 
+    fuse_op.open = open;
+    fuse_op.read = read;
+    fuse_op.write = write;
+    fuse_op.rename = rename;
+    fuse_op.mknod = mknod;
+    fuse_op.mkdir = mkdir;
+    fuse_op.destroy = destroy;
+    fuse_op.readdir = readdir;
 
-    };
     return &fuse_op;
 }
