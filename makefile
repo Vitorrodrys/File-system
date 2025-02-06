@@ -20,7 +20,7 @@ all: $(BIN)
 
 # Regra para linkar o binário final
 $(BIN): $(OBJS)
-	$(CXX) $(OBJS) -o $(BIN) `pkg-config --cflags --libs fuse`
+	$(CXX) $(OBJS) -o $(BIN) `pkg-config --cflags --libs fuse3`
 
 # Regra para compilar os arquivos .cpp para .o
 $(OBJD)/%.o: $(SRCD)/%.cpp

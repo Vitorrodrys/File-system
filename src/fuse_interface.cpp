@@ -2,9 +2,9 @@
 #include <errno.h>
 #include <filesystem>
 #include <fcntl.h>
-#include <fuse.h>
-#include <fuse/fuse_common.h>
-#include <fuse/fuse_lowlevel.h>
+#include <fuse3/fuse.h>
+#include <fuse3/fuse_common.h>
+#include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <regex>
 #include <cstring>
@@ -114,7 +114,28 @@ int mkdir (const char *dpath, mode_t mode){
     return 0;
 }
 
-int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, enum fuse_readdir_flags flags) {
+    auto fil = [&](const std::string& path, File& file) {
+        if (flags == FUSE_READDIR_PLUS) {
+            struct stat current_file_stat;
+            current_file_stat.st_mode = file.get_permissions();
+            current_file_stat.st_gid = file.get_group_id();
+            current_file_stat.st_uid = file.get_owner_id();
+            current_file_stat.st_size = file.get_size();
+            current_file_stat.st_atime = file.get_accessed_at();
+            current_file_stat.st_mtime = file.get_modified_at();
+            current_file_stat.st_ctime = file.get_created_at();
+            current_file_stat.st_nlink = 0;
+            current_file_stat.st_ino = file.get_inode();
+            current_file_stat.st_dev = 0;
+            current_file_stat.st_rdev = 0;
+            current_file_stat.st_blksize = 0;
+            current_file_stat.st_blocks = file.get_quantity_blocks();
+            filler(buf, path.c_str(), &current_file_stat, 0, FUSE_FILL_DIR_PLUS);
+        } else {
+            filler(buf, path.c_str(), nullptr, 0, (fuse_fill_dir_flags) 0);
+        }
+    };
     InodeType inode = fi->fh;
     File file(inode);
     off_t position = 2;
@@ -126,21 +147,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
     Directory dir(file);
     if (offset != 0) {
 
-        current_file_stat.st_mode = file.get_permissions();
-        current_file_stat.st_gid = file.get_group_id();
-        current_file_stat.st_uid = file.get_owner_id();
-        current_file_stat.st_size = file.get_size();
-        current_file_stat.st_atime = file.get_accessed_at();
-        current_file_stat.st_mtime = file.get_modified_at();
-        current_file_stat.st_ctime = file.get_created_at();
-        current_file_stat.st_nlink = 0;
-        current_file_stat.st_ino = file.get_inode();
-        current_file_stat.st_dev = 0;
-        current_file_stat.st_rdev = 0;
-        current_file_stat.st_blksize = 0;
-        current_file_stat.st_blocks = file.get_quantity_blocks();
-
-        filler(buf, ".", &current_file_stat, 1);
+        fil(".", file);
 
         std::tuple<std::string, std::string> parent_and_children = separete_parent_and_children(path);
         std::string parent = std::get<0>(parent_and_children);
@@ -148,15 +155,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
         File parent_file(parent_inode);
 
 
-        current_file_stat.st_mode = parent_file.get_permissions();
-        current_file_stat.st_gid = parent_file.get_group_id();
-        current_file_stat.st_uid = parent_file.get_owner_id();
-        current_file_stat.st_size = parent_file.get_size();
-        current_file_stat.st_atime = parent_file.get_accessed_at();
-        current_file_stat.st_mtime = parent_file.get_modified_at();
-        current_file_stat.st_ctime = parent_file.get_created_at();
-
-        filler(buf, "..", &current_file_stat, 2);
+        fil("..", parent_file);
     }
 
     for (auto it = dir.begin(); it != dir.end(); ++it) {
@@ -168,15 +167,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
 
         File current(it->second);
 
-        current_file_stat.st_mode = current.get_permissions();
-        current_file_stat.st_gid = current.get_group_id();
-        current_file_stat.st_uid = current.get_owner_id();
-        current_file_stat.st_size = current.get_size();
-        current_file_stat.st_atime = current.get_accessed_at();
-        current_file_stat.st_mtime = current.get_modified_at();
-        current_file_stat.st_ctime = current.get_created_at();
-
-        filler(buf, it->first.c_str(), &current_file_stat, position);
+        fil(it->first, current);
     }
 
     return 0;
