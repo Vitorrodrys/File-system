@@ -115,8 +115,9 @@ int mkdir (const char *dpath, mode_t mode){
 }
 
 int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, enum fuse_readdir_flags flags) {
-    auto fil = [&](const std::string& path, File& file) {
+    auto fil = [&](const std::string& path, InodeType finode) {
         if (flags == FUSE_READDIR_PLUS) {
+            File file(finode);
             struct stat current_file_stat;
             current_file_stat.st_mode = file.get_permissions();
             current_file_stat.st_gid = file.get_group_id();
@@ -139,15 +140,13 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
     InodeType inode = fi->fh;
     File file(inode);
     off_t position = 2;
-    struct stat current_file_stat = {}; // Declare uma vez e inicialize com valores padrão
-
     if (file.get_type() != FileType::TDIRECTORY ) {
         return -ENOTDIR;
     }
     Directory dir(file);
     if (offset != 0) {
 
-        fil(".", file);
+        fil(".", inode);
 
         std::tuple<std::string, std::string> parent_and_children = separete_parent_and_children(path);
         std::string parent = std::get<0>(parent_and_children);
@@ -155,7 +154,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
         File parent_file(parent_inode);
 
 
-        fil("..", parent_file);
+        fil("..", parent_inode);
     }
 
     for (auto it = dir.begin(); it != dir.end(); ++it) {
@@ -164,10 +163,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
         if (position < offset) {
             continue;
         }
-
-        File current(it->second);
-
-        fil(it->first, current);
+        fil(it->first, it->second);
     }
 
     return 0;

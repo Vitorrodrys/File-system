@@ -1,7 +1,7 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
-#include <fuse.h>
+#include <fuse3/fuse.h>
 #include <unordered_map>
 
 #include "../env.hpp"
