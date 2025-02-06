@@ -120,6 +120,29 @@ void *destroy(void *private_data){
 }
 
 
+int opendir (const char * path, struct fuse_file_info *fi){
+    InodeType inode=path_handler.get_inode(path);
+    if (inode == NOTFOUNDERROR) {
+        return -ENOENT;
+    }
+    File file(inode);
+    if (file.get_type() != FileType::TDIRECTORY ) {
+        return -ENOTDIR;
+    }
+     fi->fh= inode;
+    return  0;
+}
+
+int rmdir (const char *path){
+    InodeType inode=path_handler.get_inode(path);
+    if (inode == NOTFOUNDERROR) {
+        return -ENOENT;
+    }
+    Directory directory(inode);
+    directory.remove_entry(path);
+
+}
+
 
 struct fuse_operations *build_fuse_operations() {
     static struct fuse_operations fuse_op = (struct fuse_operations){
