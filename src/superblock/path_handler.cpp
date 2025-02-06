@@ -1,5 +1,6 @@
 #include <regex>
 
+#include "../env.hpp"
 #include "path_handler.hpp"
 
 
@@ -13,7 +14,9 @@ PathHandler& PathHandler::operator=(const PathHandler &other) {
 }
 PathHandler::PathHandler(DEntry &dentry) : dentry(dentry) {}
 
-PathHandler::PathHandler() : dentry(DEntry()) {}
+PathHandler::PathHandler() : dentry(DEntry()) {
+    dentry.add_entry("/", Env::get_instance().inode_slash);
+}
 
 InodeType PathHandler::get_inode(const std::string &path) {
     if (dentry.exists(path)) {

@@ -7,6 +7,7 @@
 #include <fuse/fuse_lowlevel.h>
 #include <stdio.h>
 #include <regex>
+#include <cstring>
 
 #include "commons.hpp"
 #include "env.hpp"
@@ -22,7 +23,6 @@
 BlocksManager bmanager = BlocksManager();
 PathHandler path_handler = PathHandler();
 
-const Env &fuse_envs = Env::get_instance();
 int open(const char *path, struct fuse_file_info *fi) {
     InodeType inode=path_handler.get_inode(path);
 
@@ -184,12 +184,18 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
 
 void *init(fuse_conn_info *conn){
 
-    if (std::filesystem::exists(fuse_envs.disk_file)) {
+    std::cerr << "[DEBUG] init function called" << std::endl;
+    const Env &envs = Env::get_instance();
+    if (std::filesystem::exists(envs.disk_file)) {
         bmanager.load();
+        path_handler.add_path("/", envs.inode_slash);
     } else {
-        create_virtual_disk(fuse_envs.disk_file, fuse_envs.disk_size);
+        create_virtual_disk(envs.disk_file, envs.disk_size);
         bmanager.build();
         bmanager.save();
+        fuse_context *context = fuse_get_context();
+        File source(DIRECTORY_DEFAULT_PERMISSIONS, FileType::TDIRECTORY, envs.inode_slash, context->uid, context->gid);
+        
     }
 
 }
@@ -222,6 +228,60 @@ int rmdir (const char *path){
     return 0;
 }
 
+#include <iostream>
+
+int getattr(const char *path, struct stat *fstat) {
+    std::cerr << "[DEBUG] getattr called for path: " << path << std::endl;
+
+    InodeType inode = path_handler.get_inode(path);
+    
+    if (inode == NOTFOUNDERROR) {
+        std::cerr << "[ERROR] Path not found: " << path << std::endl;
+        return -ENOENT;
+    }
+
+    std::cerr << "[DEBUG] Found inode: " << inode << std::endl;
+
+    File file(inode);
+
+    fstat->st_mode = file.get_permissions();
+    std::cerr << "[DEBUG] Permissions: " << fstat->st_mode << std::endl;
+
+    fstat->st_gid = file.get_group_id();
+    std::cerr << "[DEBUG] Group ID: " << fstat->st_gid << std::endl;
+
+    fstat->st_uid = file.get_owner_id();
+    std::cerr << "[DEBUG] Owner ID: " << fstat->st_uid << std::endl;
+
+    fstat->st_size = file.get_size();
+    std::cerr << "[DEBUG] File size: " << fstat->st_size << " bytes" << std::endl;
+
+    fstat->st_atime = file.get_accessed_at();
+    std::cerr << "[DEBUG] Last access time: " << fstat->st_atime << std::endl;
+
+    fstat->st_mtime = file.get_modified_at();
+    std::cerr << "[DEBUG] Last modified time: " << fstat->st_mtime << std::endl;
+
+    fstat->st_ctime = file.get_created_at();
+    std::cerr << "[DEBUG] Creation time: " << fstat->st_ctime << std::endl;
+
+    fstat->st_nlink = 0;
+    std::cerr << "[DEBUG] Number of links: " << fstat->st_nlink << std::endl;
+
+    fstat->st_ino = file.get_inode();
+    std::cerr << "[DEBUG] Inode number: " << fstat->st_ino << std::endl;
+
+    fstat->st_dev = 0;
+    fstat->st_rdev = 0;
+    fstat->st_blksize = 0;
+
+    fstat->st_blocks = file.get_quantity_blocks();
+    std::cerr << "[DEBUG] Number of blocks: " << fstat->st_blocks << std::endl;
+
+    std::cerr << "[DEBUG] getattr completed successfully for path: " << path << std::endl;
+
+    return 0;
+}
 
 struct fuse_operations *build_fuse_operations() {
     static struct fuse_operations fuse_op;
@@ -236,6 +296,7 @@ struct fuse_operations *build_fuse_operations() {
     fuse_op.destroy = destroy;
     fuse_op.readdir = readdir;
     fuse_op.init = init;
+    fuse_op.getattr = getattr;
 
     return &fuse_op;
 }

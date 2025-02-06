@@ -7,7 +7,6 @@
 #include "../env.hpp"
 #include "fcb.hpp"
 
-const Env &fcb_envs = Env::get_instance();
 
 bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
     for (size_t i = 0; i < MAX_POINTERS - 1; i++) {
@@ -20,12 +19,36 @@ bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
 }
 
 File::File(
+    mode_t mode,
+    FileType type,
+    InodeType inode,
+    uid_t uid,
+    gid_t gid
+) : file(Env::get_instance().disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    fcb(
+        [&]() -> FcbInode {
+            FcbInode temp;
+            temp.id = inode;
+            temp.size = BLOCK_SIZE;
+            temp.blocks = 1;
+            temp.type = type;
+            temp.owner = uid;
+            temp.group = gid;
+            temp.permissions = mode;
+            temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
+
+            file.seekg(inode * BLOCK_SIZE);
+            file.write(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
+            return temp;
+        }()
+    ) {}
+File::File(
     BlocksManager &bmanager,
     mode_t mode,
     const struct fuse_context *fc,
     FileType type
 )
-    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(Env::get_instance().disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb([&]() -> FcbInode {
           InodeType id = bmanager.get_free_block();
           FcbInode temp;
@@ -47,7 +70,7 @@ File::File(
       }()) {}
 
 File::File(InodeType id)
-    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(Env::get_instance().disk_file, std::ios::in | std::ios::out | std::ios::binary),
         fcb(
             [&]() -> FcbInode {
                 FcbInode temp;
@@ -58,7 +81,7 @@ File::File(InodeType id)
         ) {}
 
 File::File(const File &other)
-    : file(fcb_envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
+    : file(Env::get_instance().disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb(other.fcb) {}
 
 

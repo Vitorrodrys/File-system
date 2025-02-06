@@ -63,6 +63,13 @@ class File {
 
     public:
         explicit File(
+            mode_t mode,
+            FileType type,
+            InodeType inode,
+            uid_t uid,
+            gid_t gid
+        );
+        explicit File(
             BlocksManager& bmanager,
             mode_t mode,
             const struct fuse_context* fc,
