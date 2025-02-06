@@ -7,7 +7,7 @@ BIN = filesystem.out
 
 # Compilador e flags
 CXX = g++
-CXXFLAGS = -Wall -g -std=c++17  # Ajuste as flags conforme necessário
+CXXFLAGS = -Wall -g -std=c++23 -D_FILE_OFFSET_BITS=64
 
 # Encontrar todos os arquivos .cpp recursivamente em SRCD
 SRCS = $(shell find $(SRCD) -name '*.cpp')
@@ -20,7 +20,7 @@ all: $(BIN)
 
 # Regra para linkar o binário final
 $(BIN): $(OBJS)
-	$(CXX) $(OBJS) -o $(BIN)
+	$(CXX) $(OBJS) -o $(BIN) -lfuse
 
 # Regra para compilar os arquivos .cpp para .o
 $(OBJD)/%.o: $(SRCD)/%.cpp

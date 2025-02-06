@@ -128,7 +128,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,st
     }
     Directory dir(file);
     if (offset != 0 ){
-        current_file_stat = (struct stat){
+        current_file_stat = {
             .st_mode = file.get_permissions(),
             .st_gid = file.get_group_id(),
             .st_uid = file.get_owner_id(),
@@ -136,6 +136,12 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,st
             .st_atime = file.get_accessed_at(),
             .st_mtime = file.get_modified_at(),
             .st_ctime = file.get_created_at(),
+            .st_nlink = 0,        // Número de links (padrão 0)
+            .st_ino = file.get_inode(),
+            .st_dev = 0,          // ID do dispositivo
+            .st_rdev = 0,         // ID do dispositivo especial
+            .st_blksize = 0,      // Tamanho do bloco preferido
+            .st_blocks = file.get_quantity_blocks()
         };
         filler(buf, ".", &current_file_stat, 1);
 

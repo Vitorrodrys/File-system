@@ -23,7 +23,7 @@ File::File(
     BlocksManager &bmanager,
     mode_t mode,
     const struct fuse_context *fc,
-    FileType type = FileType::TFILE
+    FileType type
 )
     : file(envs.disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb([&]() -> FcbInode {

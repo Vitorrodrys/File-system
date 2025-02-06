@@ -79,6 +79,7 @@ class File {
         time_t get_created_at() const { return fcb.created_at; }
         time_t get_modified_at() const { return fcb.modified_at; }
         time_t get_accessed_at() const { return fcb.accessed_at; }
+        off_t get_quantity_blocks() const { return fcb.blocks; }
         InodeType get_inode() const;
         size_t read(off_t offset, size_t size, char* buf);
         size_t write(off_t offset, size_t size, const char* buf, BlocksManager& bmanager);
