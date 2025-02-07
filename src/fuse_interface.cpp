@@ -5,6 +5,7 @@
 #include <fuse.h>
 #include <fuse/fuse_common.h>
 #include <fuse/fuse_lowlevel.h>
+#include <iostream>
 #include <stdio.h>
 #include <regex>
 #include <cstring>
@@ -214,7 +215,7 @@ int opendir (const char * path, struct fuse_file_info *fi){
     if (file.get_type() != FileType::TDIRECTORY ) {
         return -ENOTDIR;
     }
-     fi->fh= inode;
+    fi->fh= inode;
     return  0;
 }
 
@@ -228,7 +229,6 @@ int rmdir (const char *path){
     return 0;
 }
 
-#include <iostream>
 
 int getattr(const char *path, struct stat *fstat) {
     std::cerr << "[DEBUG] getattr called for path: " << path << std::endl;
@@ -244,7 +244,7 @@ int getattr(const char *path, struct stat *fstat) {
 
     File file(inode);
 
-    fstat->st_mode = file.get_permissions();
+    fstat->st_mode = (file.get_type() == FileType::TDIRECTORY) ? (S_IFDIR | file.get_permissions()) : (S_IFREG | file.get_permissions());
     std::cerr << "[DEBUG] Permissions: " << fstat->st_mode << std::endl;
 
     fstat->st_gid = file.get_group_id();
@@ -253,7 +253,7 @@ int getattr(const char *path, struct stat *fstat) {
     fstat->st_uid = file.get_owner_id();
     std::cerr << "[DEBUG] Owner ID: " << fstat->st_uid << std::endl;
 
-    fstat->st_size = file.get_size();
+    fstat->st_size = std::max(4096, static_cast<int>(file.get_size()));
     std::cerr << "[DEBUG] File size: " << fstat->st_size << " bytes" << std::endl;
 
     fstat->st_atime = file.get_accessed_at();
@@ -265,7 +265,7 @@ int getattr(const char *path, struct stat *fstat) {
     fstat->st_ctime = file.get_created_at();
     std::cerr << "[DEBUG] Creation time: " << fstat->st_ctime << std::endl;
 
-    fstat->st_nlink = 0;
+    fstat->st_nlink = (file.get_type() == FileType::TDIRECTORY) ? 3 : 1;
     std::cerr << "[DEBUG] Number of links: " << fstat->st_nlink << std::endl;
 
     fstat->st_ino = file.get_inode();
@@ -273,7 +273,7 @@ int getattr(const char *path, struct stat *fstat) {
 
     fstat->st_dev = 0;
     fstat->st_rdev = 0;
-    fstat->st_blksize = 0;
+    fstat->st_blksize = BLOCK_SIZE;
 
     fstat->st_blocks = file.get_quantity_blocks();
     std::cerr << "[DEBUG] Number of blocks: " << fstat->st_blocks << std::endl;
@@ -283,20 +283,35 @@ int getattr(const char *path, struct stat *fstat) {
     return 0;
 }
 
+int access (const char *path, int mask){
+    return 0;
+}
+
 struct fuse_operations *build_fuse_operations() {
     static struct fuse_operations fuse_op;
     memset(&fuse_op, 0, sizeof(fuse_op));
 
+    //file operations
     fuse_op.open = open;
     fuse_op.read = read;
     fuse_op.write = write;
     fuse_op.rename = rename;
     fuse_op.mknod = mknod;
-    fuse_op.mkdir = mkdir;
-    fuse_op.destroy = destroy;
-    fuse_op.readdir = readdir;
-    fuse_op.init = init;
     fuse_op.getattr = getattr;
+
+    //permissions operations
+    fuse_op.access = access;
+
+    //directory operations
+    fuse_op.opendir = opendir;
+    fuse_op.mkdir = mkdir;
+    fuse_op.rmdir = rmdir;
+    fuse_op.readdir = readdir;
+    fuse_op.getdir = getdir;
+
+
+    fuse_op.destroy = destroy;
+    fuse_op.init = init;
 
     return &fuse_op;
 }
