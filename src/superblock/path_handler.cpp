@@ -83,6 +83,10 @@ InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmana
 
 bool PathHandler:: add_path(const std::string &path,InodeType inode) {
 
+    if ( path == "/" ){
+        dentry.add_entry(path, Env::get_instance().inode_slash);
+        return true;
+    }
     std::regex regex(R"(^(.*)/([^/]+)$)");
     std::smatch match;
 
