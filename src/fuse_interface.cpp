@@ -169,7 +169,7 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
     return 0;
 }
 
-void *init(fuse_conn_info *conn){
+void *init(fuse_conn_info *conn,  struct fuse_config *cfg){
 
     std::cerr << "[DEBUG] init function called" << std::endl;
     const Env &envs = Env::get_instance();
@@ -216,7 +216,7 @@ int rmdir (const char *path){
 }
 
 
-int getattr(const char *path, struct stat *fstat) {
+int getattr(const char *path, struct stat *fstat, struct fuse_file_info *fi) {
     std::cerr << "[DEBUG] getattr called for path: " << path << std::endl;
 
     InodeType inode = path_handler.get_inode(path);
