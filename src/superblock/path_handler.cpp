@@ -45,7 +45,7 @@ InodeType PathHandler::get_inode(const std::string &path) {
         }
         Directory dir(file);
         last_inode = dir.get_entry(token);
-        if (last_inode == 0) {
+        if (last_inode == NOTFOUNDERROR) {
             return NOTFOUNDERROR;
         }
         dentry.add_entry(subpath, last_inode);
@@ -92,7 +92,7 @@ bool PathHandler:: add_path(const std::string &path,InodeType inode) {
 
     std::regex_search(path, match, regex);
 
-    const std::string parent = match[1];
+    const std::string parent = (match[1].str().empty())?"/":match[1].str();
     const std::string child = match[2];
 
     const InodeType inode_parent =get_inode(parent);
