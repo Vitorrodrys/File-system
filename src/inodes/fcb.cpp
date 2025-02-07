@@ -29,7 +29,7 @@ File::File(
         [&]() -> FcbInode {
             FcbInode temp;
             temp.id = inode;
-            temp.size = BLOCK_SIZE;
+            temp.size = 0;
             temp.blocks = 1;
             temp.type = type;
             temp.owner = uid;
@@ -54,7 +54,7 @@ File::File(
           FcbInode temp;
 
           temp.id = id;
-          temp.size = BLOCK_SIZE;
+          temp.size = 0;
           temp.blocks = 1;
           temp.type = type;
           temp.owner = fc->uid;
