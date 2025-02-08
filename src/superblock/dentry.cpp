@@ -8,10 +8,7 @@ DEntry ::DEntry() {
 DEntry ::~DEntry() = default;
 
 bool DEntry ::exists(const std::string &path) const {
-    if (this->inode_map.contains(path)) {
-        return true;
-    }
-    return false;
+    return inode_map.contains(path);
 }
 
 bool DEntry ::add_entry(const std::string &path, InodeType inode) {

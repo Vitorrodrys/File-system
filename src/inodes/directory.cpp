@@ -17,25 +17,28 @@ Directory::Directory(const File &file) : file(file) {
 }
 Directory::~Directory() {}
 
-void Directory::load_entries(){
+void Directory::load_entries() {
     off_t file_size = file.get_size();
-    char *buf = new char[file_size];
-    file.read(0, file_size, buf);
+    std::vector<char> buf(file_size);
+    file.read(0, file_size, buf.data());
 
     int index = 0;
-
     while (index < file_size) {
-        std::string key(buf + index);
+        std::string key(buf.data() + index);
         index += key.length() + 1;
 
-        std::string inode_str(buf + index);
+        if (index > file_size){
+            throw std::runtime_error("Corrupted directory file: invalid entry format");
+        }
+        std::string inode_str(buf.data() + index);
         index += inode_str.length() + 1;
+        if (index > file_size){
+            throw std::runtime_error("Corrupted directory file: invalid entry format");
+        }
 
         entries[key] = static_cast<InodeType>(std::stoi(inode_str));
         std::cerr << "[DEBUG] loading directory entry: " << key << std::endl;
     }
-
-    delete[] buf;
 }
 std::vector<unsigned char> Directory::serialize_entries() const {
     std::vector<unsigned char> buffer;
@@ -51,7 +54,7 @@ std::vector<unsigned char> Directory::serialize_entries() const {
 }
 
 bool Directory::create_entry(const std::string &key, InodeType inode) {
-    if (entries.contains(key)) {
+    if (not entries.contains(key)) {
         return false;
     }
     entries[key] = inode;
@@ -59,7 +62,7 @@ bool Directory::create_entry(const std::string &key, InodeType inode) {
 }
 
 InodeType Directory::remove_entry(const std::string &key) {
-    if (entries.contains(key)) {
+    if (not entries.contains(key)) {
         return NOTFOUNDERROR;
     }
     const InodeType inode = entries[key];
@@ -68,15 +71,14 @@ InodeType Directory::remove_entry(const std::string &key) {
 }
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
-    off_t old_size = file.get_size();
     file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
-    if (old_size > file.get_size()){
+    if (static_cast<std::vector<unsigned char>::size_type>(file.get_size()) > buffer.size()){
         file.truncate(buffer.size(), bmanager);
     }
 }
 
 InodeType Directory::get_entry(const std::string &key) {
-    if (entries.contains(key)) {
+    if (not entries.contains(key)) {
         return NOTFOUNDERROR;
     }
     return entries[key];

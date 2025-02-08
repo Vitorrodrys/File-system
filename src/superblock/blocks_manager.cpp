@@ -1,3 +1,4 @@
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <string.h>
@@ -58,12 +59,14 @@ BlocksManager& BlocksManager::operator=(const BlocksManager &other) {
 }
 
 BlockType BlocksManager ::get_free_block() {
+    const Env& envs = Env::get_instance();
     if (this->first == END_OF_LIST) {
         return END_OF_LIST;
     }
     BlockType block = this->first;
     this->first = this->free_blocks[block];
     this->free_blocks[block] = OCCUPIED;
+    assert(block != MANAGER_INODE_NUMBER && block != envs.inode_slash && block != OCCUPIED && block != END_OF_LIST);
     return block;
 }
 
