@@ -54,7 +54,7 @@ std::vector<unsigned char> Directory::serialize_entries() const {
 }
 
 bool Directory::create_entry(const std::string &key, InodeType inode) {
-    if (not entries.contains(key)) {
+    if (entries.contains(key)) {
         return false;
     }
     entries[key] = inode;
