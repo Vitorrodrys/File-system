@@ -1,3 +1,8 @@
+FUSE_ROOT_DIR = /usr/include/fuse3
+
+FUSE3_CFLAGS = $(shell pkg-config --cflags fuse3)
+FUSE3_LIBS = $(shell pkg-config --libs fuse3)
+
 # Diretórios de origem e de objetos
 SRCD = src
 OBJD = obj
@@ -7,7 +12,9 @@ BIN = filesystem.out
 
 # Compilador e flags
 CXX = g++
-CXXFLAGS = -Wall -g -std=c++23 -D_FILE_OFFSET_BITS=64
+CXXFLAGS = -Wall -g -std=c++23 -D_FILE_OFFSET_BITS=64 $(FUSE3_CFLAGS)
+LDFLAGS = $(FUSE3_LIBS)
+
 
 # Encontrar todos os arquivos .cpp recursivamente em SRCD
 SRCS = $(shell find $(SRCD) -name '*.cpp')
@@ -20,7 +27,7 @@ all: $(BIN)
 
 # Regra para linkar o binário final
 $(BIN): $(OBJS)
-	$(CXX) $(OBJS) -o $(BIN) `pkg-config --cflags --libs fuse`
+	$(CXX) $(OBJS) -o $(BIN) $(LDFLAGS)
 
 # Regra para compilar os arquivos .cpp para .o
 $(OBJD)/%.o: $(SRCD)/%.cpp
