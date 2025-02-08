@@ -6,23 +6,22 @@
 #include "../env.hpp"
 #include "blocks_manager.hpp"
 
-#define MANAGER_INODE_NUMBER 1
+#define MANAGER_INODE_NUMBER 0
 
 BlocksManager ::~BlocksManager() { delete[] this->free_blocks; }
 
 void BlocksManager ::build() {
     const Env &envs = Env::get_instance();
-    this->first = 0;
+    this->first = 1;
     this->last = envs.block_quantity - 1;
     this->free_blocks = new BlockType[envs.block_quantity];
-    for (BlockType i = 0; i < envs.block_quantity - 1; i++) {
+    for (BlockType i = 1; i < envs.block_quantity - 1; i++) {
         this->free_blocks[i] = i + 1;
     }
     this->free_blocks[envs.block_quantity - 1] = END_OF_LIST;
     // this ensure that the MANAGER block neves will be returned as free
     // for some get_free_block call, as well ensure that the Inode slash
     // never is returned as free block in some get_free_block call
-    this->free_blocks[MANAGER_INODE_NUMBER-1] = MANAGER_INODE_NUMBER + 1;
     this->free_blocks[envs.inode_slash-1] = envs.inode_slash + 1;
     this->free_blocks[MANAGER_INODE_NUMBER] = OCCUPIED;
     this->free_blocks[envs.inode_slash] = OCCUPIED;
