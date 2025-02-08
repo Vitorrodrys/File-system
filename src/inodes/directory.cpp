@@ -1,11 +1,13 @@
 #include "directory.hpp"
+#include <iostream>
 
 
 Directory::Directory(
-    BlocksManager &bmanager,
+    const std::string& name,
     mode_t permissions,
+    BlocksManager &bmanager,
     const struct fuse_context *fc
-) : file(bmanager, permissions, fc, FileType::TDIRECTORY) {}
+) : file(name, permissions, bmanager, fc, FileType::TDIRECTORY) {}
 
 Directory::Directory(InodeType id) : file(id) {
     load_entries();
@@ -29,6 +31,7 @@ void Directory::load_entries(){
         index += inode_str.length() + 1;
 
         entries[key] = static_cast<InodeType>(std::stoi(inode_str));
+        std::cerr << "[DEBUG] loading directory entry: " << key << std::endl;
     }
 
     delete[] buf;

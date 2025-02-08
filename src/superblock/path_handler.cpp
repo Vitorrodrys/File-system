@@ -81,7 +81,7 @@ InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmana
 }
 
 
-bool PathHandler:: add_path(const std::string &path,InodeType inode) {
+bool PathHandler:: add_path(const std::string &path,InodeType inode, BlocksManager &bmanager) {
 
     if ( path == "/" ){
         dentry.add_entry(path, Env::get_instance().inode_slash);
@@ -103,6 +103,7 @@ bool PathHandler:: add_path(const std::string &path,InodeType inode) {
     Directory dir(inode_parent);
     dir.create_entry(child, inode);
     dentry.add_entry(path, inode);
+    dir.flush(bmanager);
 
      return true;
 }
