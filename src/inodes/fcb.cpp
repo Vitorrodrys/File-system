@@ -89,6 +89,10 @@ File::File(const File &other)
     : file(Env::get_instance().disk_file, std::ios::in | std::ios::out | std::ios::binary),
       fcb(other.fcb) {}
 
+File::~File() {
+    update_fcb();
+    file.close();
+}
 
 void File::update_fcb() {
     file.seekp(fcb.id * BLOCK_SIZE);
@@ -135,7 +139,7 @@ size_t File::read(off_t offset, size_t size, char *buf) {
         load_data_block(from_block, &data);
         remaining_block =
             std::min(static_cast<uint16_t>(data.current_size),
-                     static_cast<uint16_t>(BLOCK_DSIZE - from_offset));
+                     remaining_size);
         memcpy(buf + total_readed, data.data + from_offset, remaining_block);
         ifrom_block++;
         from_block = get_block_value(ifrom_block);
@@ -246,7 +250,7 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
 
 size_t File::write(off_t offset, size_t size, const char *buf,
                    BlocksManager &bmanager) {
-    if ( fcb.size and offset >= fcb.size ) {
+    if ( offset > fcb.size ) {
         return 0;
     }
     size_t total_written = 0;
@@ -262,8 +266,8 @@ size_t File::write(off_t offset, size_t size, const char *buf,
             size_t extra_writted =
                 write_extra(remaining_size, buf + total_written, bmanager);
             total_written += extra_writted;
-            fcb.blocks = total_written / BLOCK_DSIZE;
-            fcb.size = total_written;
+            fcb.size = offset + total_written;
+            fcb.blocks = fcb.size / BLOCK_DSIZE+1;
             update_fcb();
             return total_written;
         }
@@ -280,17 +284,17 @@ size_t File::write(off_t offset, size_t size, const char *buf,
         remaining_size -= remaining_block;
         total_written += remaining_block;
     }
-    // The sum of BLOCK_SIZE + total_written is because at least one block is being used to 
-    // file headers
-    if (static_cast<off_t>((BLOCK_SIZE + total_written) / BLOCK_DSIZE) < fcb.blocks) {
-        remove_unused_blocks(total_written / BLOCK_DSIZE, bmanager);
-        fcb.blocks = total_written / BLOCK_DSIZE;
-    }
-
-    fcb.size = total_written;
-    update_fcb();
-
     return total_written;
+}
+
+void File::truncate(off_t new_size, BlocksManager& bmanager){
+    
+    if (new_size < fcb.size ){
+        remove_unused_blocks(new_size / BLOCK_DSIZE, bmanager);
+    }
+    fcb.size = new_size;
+    fcb.blocks = fcb.size / BLOCK_DSIZE + 1;
+    update_fcb();
 }
 
 FileType File::get_type() const { 

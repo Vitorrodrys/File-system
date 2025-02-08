@@ -78,6 +78,7 @@ class File {
         );
         explicit File(InodeType id);
         explicit File(const File &other);
+        ~File();
 
         FileType get_type() const;
         off_t get_size() const;
@@ -91,6 +92,7 @@ class File {
         InodeType get_inode() const;
         size_t read(off_t offset, size_t size, char* buf);
         size_t write(off_t offset, size_t size, const char* buf, BlocksManager& bmanager);
+        void truncate(off_t new_size, BlocksManager& bmanager);
 };
 
 #endif

@@ -15,6 +15,7 @@ Directory::Directory(InodeType id) : file(id) {
 Directory::Directory(File &file) : file(file) {
     load_entries();
 }
+Directory::~Directory() {}
 
 void Directory::load_entries(){
     off_t file_size = file.get_size();
@@ -67,7 +68,11 @@ InodeType Directory::remove_entry(const std::string &key) {
 }
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
+    off_t old_size = file.get_size();
     file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
+    if (old_size > file.get_size()){
+        file.truncate(buffer.size(), bmanager);
+    }
 }
 
 InodeType Directory::get_entry(const std::string &key) {

@@ -21,6 +21,7 @@ class Directory {
         explicit Directory(const std::string& name, mode_t permissions, BlocksManager& bmanager, const struct fuse_context* fc);
         explicit Directory(InodeType id);
         explicit Directory(File& file);
+        ~Directory();
         bool create_entry(const std::string& key, InodeType inode);
         InodeType remove_entry(const std::string& key);
         InodeType get_entry(const std::string& key);

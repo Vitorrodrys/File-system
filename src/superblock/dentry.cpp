@@ -6,16 +6,10 @@
 #include "dentry.hpp"
 
 DEntry ::DEntry() {
-    this->inode_map = std::unordered_map<std::string, InodeType>();
     this->quantity_entries = 0;
 }
 
-DEntry::DEntry(const DEntry &other){
-    this->inode_map = other.inode_map;
-    this->quantity_entries = other.quantity_entries;
-}
-
-DEntry ::~DEntry() { this->inode_map.clear(); }
+DEntry ::~DEntry() = default;
 
 bool DEntry ::exists(const std::string &path) const {
 

@@ -12,9 +12,8 @@ PathHandler& PathHandler::operator=(const PathHandler &other) {
     this->dentry = other.dentry;
     return *this;
 }
-PathHandler::PathHandler(DEntry &dentry) : dentry(dentry) {}
 
-PathHandler::PathHandler() : dentry(DEntry()) {
+PathHandler::PathHandler() {
     dentry.add_entry("/", Env::get_instance().inode_slash);
 }
 

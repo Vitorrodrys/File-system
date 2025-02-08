@@ -14,7 +14,6 @@ class PathHandler {
         DEntry dentry;
 
     public:
-        explicit PathHandler(DEntry& dentry);
         explicit PathHandler();
         PathHandler& operator=(const PathHandler& other);
         InodeType get_inode(const std::string& path);

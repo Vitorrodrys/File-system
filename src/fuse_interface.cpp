@@ -67,6 +67,13 @@ int write(const char *path, const char *buf, size_t size, off_t offset, struct f
     return (int) size_bytes;
 }
 
+int truncate (const char *path, off_t new_size, struct fuse_file_info *fi){
+    InodeType inode = fi->fh;
+    File file(inode);
+    file.truncate(new_size,bmanager);
+    return 0;
+}
+
 int rename (const char *path, const char * newpath, unsigned int flags) {
     InodeType inode=path_handler.get_inode(path);
 
@@ -282,6 +289,7 @@ struct fuse_operations *build_fuse_operations() {
     fuse_op.rename = rename;
     fuse_op.mknod = mknod;
     fuse_op.getattr = getattr;
+    fuse_op.truncate = truncate;
 
     //permissions operations
     fuse_op.access = access;
