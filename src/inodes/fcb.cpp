@@ -9,16 +9,6 @@
 #include "fcb.hpp"
 
 
-bool File::fill_indirect_header(HeaderIndexs &ind_header, BlockType new_block) {
-    for (size_t i = 0; i < MAX_POINTERS - 1; i++) {
-        if (ind_header.data_inodes[i] == 0) {
-            ind_header.data_inodes[i] = new_block;
-            return true;
-        }
-    }
-    return false;
-}
-
 File::File(
     mode_t mode,
     FileType type,
@@ -109,6 +99,9 @@ BlockType File::get_block_value(uint32_t index) {
     HeaderIndexs headers = fcb.headers;
     while (index >= MAX_POINTERS - 1) {
         index -= MAX_POINTERS - 1;
+        if (headers.single_indirect == 0){
+            return 0;
+        }
         load_indirect(headers.single_indirect, &headers);
     }
     return headers.data_inodes[index];
@@ -131,14 +124,14 @@ size_t File::read(off_t offset, size_t size, char *buf) {
     uint32_t ifrom_block = offset / BLOCK_DSIZE;
     BlockType from_block = get_block_value(ifrom_block);
     uint16_t from_offset = offset % BLOCK_DSIZE;
-    uint16_t remaining_size = size;
-    uint16_t remaining_block;
+    size_t remaining_size = size;
+    size_t remaining_block;
     DataInode data;
 
     while (remaining_size > 0) {
         load_data_block(from_block, &data);
         remaining_block =
-            std::min(static_cast<uint16_t>(data.current_size),
+            std::min(static_cast<size_t>(data.current_size),
                      remaining_size);
         memcpy(buf + total_readed, data.data + from_offset, remaining_block);
         ifrom_block++;
@@ -154,38 +147,59 @@ size_t File::read(off_t offset, size_t size, char *buf) {
     return total_readed;
 }
 
-BlockType File::add_block(BlocksManager &bmanager) {
-    BlockType new_block = bmanager.get_free_block();
-    if (fcb.headers.single_indirect == 0) {
-        fill_indirect_header(fcb.headers, new_block);
-        file.seekg(BLOCK_SIZE * fcb.id);
-        file.write(reinterpret_cast<const char *>(&fcb), sizeof(FcbInode));
-        return new_block;
-    }
+void File::fill_indirect_header(BlocksManager& bmanager, BlockType new_block) {
 
+    auto fill_header = [&](HeaderIndexs& headers, BlockType new_block) -> bool{
+        for (size_t i = 0; i < MAX_POINTERS - 1; i++) {
+            if (headers.data_inodes[i] == 0) {
+                headers.data_inodes[i] = new_block;
+                return true;
+            }
+        }
+        return false;
+    };
+    if (fcb.headers.single_indirect == 0 and fill_header(fcb.headers, new_block)){
+        update_fcb();
+        return;
+    } else if (fcb.headers.single_indirect == 0 ){
+        BlockType new_indirect = bmanager.get_free_block();
+        fcb.headers.single_indirect = new_indirect;
+        HeaderIndexs indirect;
+        memset(&indirect, 0, sizeof(HeaderIndexs));
+        indirect.data_inodes[0] = new_block;
+        file.seekg(new_indirect*BLOCK_SIZE);
+        file.write(reinterpret_cast<const char *>(&indirect), sizeof(HeaderIndexs));
+        update_fcb();
+        return;
+    }
+    BlockType last_indirect=fcb.headers.single_indirect;
     HeaderIndexs headers;
-    load_indirect(fcb.headers.single_indirect, &headers);
-    BlockType last_indirect = fcb.headers.single_indirect;
-    while (headers.single_indirect != 0) {
+    load_indirect(last_indirect, &headers);
+    while (headers.single_indirect != 0 or not fill_header(headers, new_block) ){
+        if (headers.single_indirect == 0){
+            BlockType new_bindirect = bmanager.get_free_block();
+            headers.single_indirect = new_bindirect;
+            file.seekg(last_indirect*BLOCK_SIZE);
+            file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
+
+            HeaderIndexs new_indirect;
+            memset(&new_indirect, 0, sizeof(HeaderIndexs));
+            new_indirect.data_inodes[0] = new_block;
+            file.seekg(headers.single_indirect*BLOCK_SIZE);
+            file.write(reinterpret_cast<const char *>(&new_indirect), sizeof(HeaderIndexs));
+            return;
+        }
         last_indirect = headers.single_indirect;
         load_indirect(last_indirect, &headers);
     }
-
-    if (fill_indirect_header(headers, new_block)) {
-        file.seekg(last_indirect * BLOCK_SIZE);
-        file.write(reinterpret_cast<const char *>(&headers),
-                   sizeof(HeaderIndexs));
-        return new_block;
-    }
-
-    BlockType new_indirect = bmanager.get_free_block();
-    headers.single_indirect = new_indirect;
-    HeaderIndexs indirect;
-    indirect.data_inodes[0] = new_block;
-    file.seekg(last_indirect * BLOCK_SIZE);
+    file.seekg(last_indirect*BLOCK_SIZE);
     file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
-    file.seekg(new_indirect * BLOCK_SIZE);
-    file.write(reinterpret_cast<const char *>(&indirect), sizeof(HeaderIndexs));
+}
+
+
+BlockType File::add_block(BlocksManager &bmanager) {
+    BlockType new_block = bmanager.get_free_block();
+    fill_indirect_header(bmanager, new_block);
     return new_block;
 }
 
@@ -275,7 +289,7 @@ size_t File::write(off_t offset, size_t size, const char *buf,
             std::min(static_cast<uint16_t>(remaining_size),
                      static_cast<uint16_t>(BLOCK_DSIZE - from_offset));
         memcpy(data.data + from_offset, buf + total_written, remaining_block);
-        data.current_size += remaining_block;
+        data.current_size = from_offset + remaining_block;
         file.seekp(from_block * BLOCK_SIZE);
         file.write(reinterpret_cast<char *>(&data), sizeof(DataInode));
         ind_from_block++;
@@ -283,6 +297,10 @@ size_t File::write(off_t offset, size_t size, const char *buf,
         from_block = get_block_value(ind_from_block);
         remaining_size -= remaining_block;
         total_written += remaining_block;
+    }
+    if (fcb.size < static_cast<off_t>(offset + total_written)){
+        fcb.size = offset + total_written;
+        update_fcb();
     }
     return total_written;
 }
