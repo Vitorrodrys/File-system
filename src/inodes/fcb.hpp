@@ -40,7 +40,7 @@ typedef struct FcbInode {
 
 typedef struct DataInode {
     unsigned short current_size;
-    char data[BLOCK_SIZE - BLOCK_DSIZE];
+    char data[BLOCK_DSIZE];
 } DataInode;
 
 class File {
@@ -70,8 +70,9 @@ class File {
             gid_t gid
         );
         explicit File(
-            BlocksManager& bmanager,
+            const std::string& name,
             mode_t mode,
+            BlocksManager& bmanager,
             const struct fuse_context* fc,
             FileType type = FileType::TFILE
         );

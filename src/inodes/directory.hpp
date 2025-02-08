@@ -18,7 +18,7 @@ class Directory {
         void load_entries();
 
     public:
-        explicit Directory(BlocksManager& bmanager, mode_t permissions, const struct fuse_context* fc);
+        explicit Directory(const std::string& name, mode_t permissions, BlocksManager& bmanager, const struct fuse_context* fc);
         explicit Directory(InodeType id);
         explicit Directory(File& file);
         bool create_entry(const std::string& key, InodeType inode);

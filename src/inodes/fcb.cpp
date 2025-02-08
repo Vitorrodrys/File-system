@@ -1,3 +1,4 @@
+#define FUSE_USE_VERSION 31
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -28,14 +29,16 @@ File::File(
     fcb(
         [&]() -> FcbInode {
             FcbInode temp;
+            strcpy(temp.name, "/");
             temp.id = inode;
-            temp.size = BLOCK_SIZE;
+            temp.size = 0;
             temp.blocks = 1;
             temp.type = type;
             temp.owner = uid;
             temp.group = gid;
             temp.permissions = mode;
             temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
+            memset(&temp.headers, 0, sizeof(temp.headers));
 
             file.seekg(inode * BLOCK_SIZE);
             file.write(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
@@ -43,8 +46,9 @@ File::File(
         }()
     ) {}
 File::File(
-    BlocksManager &bmanager,
+    const std::string& name,
     mode_t mode,
+    BlocksManager &bmanager,
     const struct fuse_context *fc,
     FileType type
 )
@@ -52,15 +56,16 @@ File::File(
       fcb([&]() -> FcbInode {
           InodeType id = bmanager.get_free_block();
           FcbInode temp;
-
+          strcpy(temp.name, name.c_str());
           temp.id = id;
-          temp.size = BLOCK_SIZE;
+          temp.size = 0;
           temp.blocks = 1;
           temp.type = type;
           temp.owner = fc->uid;
           temp.group = fc->gid;
           temp.permissions = mode;
           temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
+          memset(&temp.headers, 0, sizeof(temp.headers));
 
 
           file.seekg(id * BLOCK_SIZE);
@@ -135,6 +140,7 @@ size_t File::read(off_t offset, size_t size, char *buf) {
         ifrom_block++;
         from_block = get_block_value(ifrom_block);
         if (from_block == 0) {
+            total_readed += remaining_block;
             return total_readed;
         }
         from_offset = 0;
@@ -184,9 +190,10 @@ size_t File::write_extra(size_t size, const char *buf,
     size_t total_writen = 0;
     size_t remaining_size = size;
     off_t offset = 0;
-    BlockType new_block = add_block(bmanager);
+    BlockType new_block;
     DataInode data;
     while (remaining_size > 0) {
+        new_block = add_block(bmanager);
         data.current_size = std::min(static_cast<uint16_t>(remaining_size),
                                      static_cast<uint16_t>(BLOCK_DSIZE));
         memcpy(data.data, buf + offset, data.current_size);
@@ -195,11 +202,7 @@ size_t File::write_extra(size_t size, const char *buf,
         offset += data.current_size;
         remaining_size -= data.current_size;
         total_writen += data.current_size;
-        new_block = add_block(bmanager);
     }
-    fcb.blocks += total_writen / BLOCK_DSIZE;
-    file.seekp(fcb.id * BLOCK_SIZE);
-    file.write(reinterpret_cast<char *>(&fcb), sizeof(FcbInode));
     return total_writen;
 }
 
@@ -243,7 +246,7 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
 
 size_t File::write(off_t offset, size_t size, const char *buf,
                    BlocksManager &bmanager) {
-    if (offset >= fcb.size) {
+    if ( fcb.size and offset >= fcb.size ) {
         return 0;
     }
     size_t total_written = 0;
@@ -277,7 +280,9 @@ size_t File::write(off_t offset, size_t size, const char *buf,
         remaining_size -= remaining_block;
         total_written += remaining_block;
     }
-    if (static_cast<off_t>(total_written / BLOCK_DSIZE) < fcb.blocks) {
+    // The sum of BLOCK_SIZE + total_written is because at least one block is being used to 
+    // file headers
+    if (static_cast<off_t>((BLOCK_SIZE + total_written) / BLOCK_DSIZE) < fcb.blocks) {
         remove_unused_blocks(total_written / BLOCK_DSIZE, bmanager);
         fcb.blocks = total_written / BLOCK_DSIZE;
     }

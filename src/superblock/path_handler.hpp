@@ -26,6 +26,6 @@ class PathHandler {
             bmanager: BlocksManager -> a reference to the blocks manager object
         */
         InodeType remove_path(const std::string& path, BlocksManager& bmanager);
-        bool add_path(const std::string &path,InodeType inode) ;
+        bool add_path(const std::string &path,InodeType inode, BlocksManager &bmanager) ;
 };
 #endif

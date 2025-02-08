@@ -18,6 +18,13 @@ void BlocksManager ::build() {
         this->free_blocks[i] = i + 1;
     }
     this->free_blocks[envs.block_quantity - 1] = END_OF_LIST;
+    // this ensure that the MANAGER block neves will be returned as free
+    // for some get_free_block call, as well ensure that the Inode slash
+    // never is returned as free block in some get_free_block call
+    this->free_blocks[MANAGER_INODE_NUMBER-1] = MANAGER_INODE_NUMBER + 1;
+    this->free_blocks[envs.inode_slash-1] = envs.inode_slash + 1;
+    this->free_blocks[MANAGER_INODE_NUMBER] = OCCUPIED;
+    this->free_blocks[envs.inode_slash] = OCCUPIED;
 }
 
 void BlocksManager ::load() {
