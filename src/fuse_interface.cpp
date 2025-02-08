@@ -156,7 +156,6 @@ int readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, s
         std::tuple<std::string, std::string> parent_and_children = separete_parent_and_children(path);
         std::string parent = std::get<0>(parent_and_children);
         InodeType parent_inode = path_handler.get_inode(parent);
-        File parent_file(parent_inode);
 
 
         fil("..", parent_inode);
@@ -187,8 +186,8 @@ void *init(fuse_conn_info *conn,  struct fuse_config *cfg){
         bmanager.save();
         fuse_context *context = fuse_get_context();
         File source(DIRECTORY_DEFAULT_PERMISSIONS, FileType::TDIRECTORY, envs.inode_slash, context->uid, context->gid);
-        
     }
+    return nullptr;
 
 }
 
@@ -225,7 +224,6 @@ int getattr(const char *path, struct stat *fstat, struct fuse_file_info *fi) {
     std::cerr << "[DEBUG] getattr called for path: " << path << std::endl;
 
     InodeType inode = path_handler.get_inode(path);
-    
     if (inode == NOTFOUNDERROR) {
         std::cerr << "[ERROR] Path not found: " << path << std::endl;
         return -ENOENT;
@@ -279,8 +277,7 @@ int access (const char *path, int mask){
 }
 
 struct fuse_operations *build_fuse_operations() {
-    static struct fuse_operations fuse_op;
-    memset(&fuse_op, 0, sizeof(fuse_op));
+    static struct fuse_operations fuse_op={0};
 
     //file operations
     fuse_op.open = open;

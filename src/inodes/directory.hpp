@@ -14,21 +14,21 @@ class Directory {
     private:
         File file;
         std::unordered_map<std::string, InodeType> entries;
-        std::vector<unsigned char> serialize_entries();
+        std::vector<unsigned char> serialize_entries() const;
         void load_entries();
 
     public:
         explicit Directory(const std::string& name, mode_t permissions, BlocksManager& bmanager, const struct fuse_context* fc);
         explicit Directory(InodeType id);
-        explicit Directory(File& file);
+        explicit Directory(const File& file);
         ~Directory();
         bool create_entry(const std::string& key, InodeType inode);
         InodeType remove_entry(const std::string& key);
         InodeType get_entry(const std::string& key);
-        InodeType get_inode();
+        InodeType get_inode() const;
         void flush(BlocksManager& bmanager);
 
-        // Allow iterate by directory entries
+        // Allow to iterate by directory entries
         using Iterator = std::unordered_map<std::string, InodeType>::iterator;
         using ConstIterator = std::unordered_map<std::string, InodeType>::const_iterator;
 

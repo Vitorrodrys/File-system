@@ -12,7 +12,7 @@ Directory::Directory(
 Directory::Directory(InodeType id) : file(id) {
     load_entries();
 }
-Directory::Directory(File &file) : file(file) {
+Directory::Directory(const File &file) : file(file) {
     load_entries();
 }
 Directory::~Directory() {}
@@ -37,7 +37,7 @@ void Directory::load_entries(){
 
     delete[] buf;
 }
-std::vector<unsigned char> Directory::serialize_entries() {
+std::vector<unsigned char> Directory::serialize_entries() const {
     std::vector<unsigned char> buffer;
     for (auto &entry : entries) {
         buffer.insert(buffer.end(), entry.first.begin(), entry.first.end());
@@ -51,7 +51,7 @@ std::vector<unsigned char> Directory::serialize_entries() {
 }
 
 bool Directory::create_entry(const std::string &key, InodeType inode) {
-    if (entries.find(key) != entries.end()) {
+    if (entries.contains(key)) {
         return false;
     }
     entries[key] = inode;
@@ -59,10 +59,10 @@ bool Directory::create_entry(const std::string &key, InodeType inode) {
 }
 
 InodeType Directory::remove_entry(const std::string &key) {
-    if (entries.find(key) == entries.end()) {
+    if (entries.contains(key)) {
         return NOTFOUNDERROR;
     }
-    InodeType inode = entries[key];
+    const InodeType inode = entries[key];
     entries.erase(key);
     return inode;
 }
@@ -76,12 +76,12 @@ void Directory::flush(BlocksManager &bmanager) {
 }
 
 InodeType Directory::get_entry(const std::string &key) {
-    if (entries.find(key) == entries.end()) {
+    if (entries.contains(key)) {
         return NOTFOUNDERROR;
     }
     return entries[key];
 }
 
-InodeType Directory::get_inode() {
+InodeType Directory::get_inode() const{
     return file.get_inode();
 }

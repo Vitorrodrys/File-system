@@ -288,7 +288,6 @@ size_t File::write(off_t offset, size_t size, const char *buf,
 }
 
 void File::truncate(off_t new_size, BlocksManager& bmanager){
-    
     if (new_size < fcb.size ){
         remove_unused_blocks(new_size / BLOCK_DSIZE, bmanager);
     }
@@ -297,11 +296,11 @@ void File::truncate(off_t new_size, BlocksManager& bmanager){
     update_fcb();
 }
 
-FileType File::get_type() const { 
-    return fcb.type; 
+FileType File::get_type() const {
+    return fcb.type;
 }
-off_t File::get_size() const { 
-    return fcb.size; 
+off_t File::get_size() const {
+    return fcb.size;
 }
 InodeType File::get_inode() const{
     return fcb.id;

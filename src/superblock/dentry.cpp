@@ -1,8 +1,4 @@
 #include <fstream>
-#include <iostream>
-
-#include "../env.hpp"
-#include "blocks_manager.hpp"
 #include "dentry.hpp"
 
 DEntry ::DEntry() {
@@ -12,11 +8,7 @@ DEntry ::DEntry() {
 DEntry ::~DEntry() = default;
 
 bool DEntry ::exists(const std::string &path) const {
-
-    auto end_signal = this->inode_map.end();
-    // if the element already exists on the map, then return false and do
-    // nothing
-    if (this->inode_map.find(path) != end_signal) {
+    if (this->inode_map.contains(path)) {
         return true;
     }
     return false;
@@ -50,7 +42,7 @@ InodeType DEntry ::get_inode(const std::string &path) const {
         return false;
     }
 
-    auto it = this->inode_map.find(path);
+    const auto it = this->inode_map.find(path);
 
     return it->second;
 }

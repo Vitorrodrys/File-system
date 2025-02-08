@@ -50,7 +50,7 @@ class File {
         FcbInode fcb;
 
     protected:
-        bool fill_indirect_header(HeaderIndexs& ind_header, BlockType new_block);
+        static bool fill_indirect_header(HeaderIndexs& ind_header, BlockType new_block);
         BlockType add_block(BlocksManager& bmanager);
         void remove_unused_blocks(BlockType last_used, BlocksManager& bmanager);
         
