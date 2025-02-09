@@ -26,6 +26,8 @@ class Directory {
         InodeType remove_entry(const std::string& key);
         InodeType get_entry(const std::string& key);
         InodeType get_inode() const;
+        void delete_dir(BlocksManager& bmanager);
+        bool empty() const;
         void flush(BlocksManager& bmanager);
 
         // Allow to iterate by directory entries

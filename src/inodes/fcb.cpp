@@ -30,7 +30,7 @@ File::File(
             temp.created_at = temp.modified_at = temp.accessed_at = time(nullptr);
             memset(&temp.headers, 0, sizeof(temp.headers));
 
-            file.seekg(inode * BLOCK_SIZE);
+            file.seekp(inode * BLOCK_SIZE);
             file.write(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
             return temp;
         }()
@@ -81,6 +81,7 @@ File::File(const File &other)
 
 File::~File() {
     update_fcb();
+    file.flush();
     file.close();
 }
 
@@ -167,7 +168,7 @@ void File::fill_indirect_header(BlocksManager& bmanager, BlockType new_block) {
         HeaderIndexs indirect;
         memset(&indirect, 0, sizeof(HeaderIndexs));
         indirect.data_inodes[0] = new_block;
-        file.seekg(new_indirect*BLOCK_SIZE);
+        file.seekp(new_indirect*BLOCK_SIZE);
         file.write(reinterpret_cast<const char *>(&indirect), sizeof(HeaderIndexs));
         update_fcb();
         return;
@@ -179,20 +180,20 @@ void File::fill_indirect_header(BlocksManager& bmanager, BlockType new_block) {
         if (headers.single_indirect == 0){
             BlockType new_bindirect = bmanager.get_free_block();
             headers.single_indirect = new_bindirect;
-            file.seekg(last_indirect*BLOCK_SIZE);
+            file.seekp(last_indirect*BLOCK_SIZE);
             file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
 
             HeaderIndexs new_indirect;
             memset(&new_indirect, 0, sizeof(HeaderIndexs));
             new_indirect.data_inodes[0] = new_block;
-            file.seekg(headers.single_indirect*BLOCK_SIZE);
+            file.seekp(headers.single_indirect*BLOCK_SIZE);
             file.write(reinterpret_cast<const char *>(&new_indirect), sizeof(HeaderIndexs));
             return;
         }
         last_indirect = headers.single_indirect;
         load_indirect(last_indirect, &headers);
     }
-    file.seekg(last_indirect*BLOCK_SIZE);
+    file.seekp(last_indirect*BLOCK_SIZE);
     file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
 }
 
@@ -235,8 +236,7 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
             }
             if (headers->single_indirect != 0) {
                 HeaderIndexs indirect;
-                BlockType indirect_index =
-                    load_indirect(headers->single_indirect, &indirect);
+                BlockType indirect_index = load_indirect(headers->single_indirect, &indirect);
                 clean(0, &indirect);
                 bmanager.release_block(indirect_index);
                 headers->single_indirect = 0;
@@ -245,7 +245,7 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
 
     if (last_used < MAX_POINTERS - 1) {
         clean(last_used + 1, &fcb.headers);
-        file.seekg(fcb.id * BLOCK_SIZE);
+        file.seekp(fcb.id * BLOCK_SIZE);
         file.write(reinterpret_cast<const char *>(&fcb), sizeof(FcbInode));
         return;
     }
@@ -258,7 +258,7 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
     } while (last_used >= MAX_POINTERS - 1);
 
     clean(last_used + 1, &headers);
-    file.seekg(indirect_index * BLOCK_SIZE);
+    file.seekp(indirect_index * BLOCK_SIZE);
     file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
 }
 
@@ -303,6 +303,11 @@ size_t File::write(off_t offset, size_t size, const char *buf,
         update_fcb();
     }
     return total_written;
+}
+
+void File::delete_file(BlocksManager& bmanager){
+    truncate(0, bmanager);
+    bmanager.release_block(fcb.id);
 }
 
 void File::truncate(off_t new_size, BlocksManager& bmanager){

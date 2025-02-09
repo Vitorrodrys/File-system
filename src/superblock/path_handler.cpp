@@ -59,7 +59,7 @@ InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmana
 
     std::regex_search(path, match, regex);
 
-    const std::string parent = match[1]; // catch the parent directory of the path
+    const std::string parent = (match[1].str().empty())?"/":match[1].str();// catch the parent directory of the path
     const std::string child = match[2]; // catch the last child of path
     InodeType parent_inode;
 

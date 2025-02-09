@@ -69,6 +69,12 @@ InodeType Directory::remove_entry(const std::string &key) {
     entries.erase(key);
     return inode;
 }
+void Directory::delete_dir(BlocksManager& bmanager){
+    file.delete_file(bmanager);
+}
+bool Directory::empty() const{
+    return entries.empty();
+}
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
     file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);

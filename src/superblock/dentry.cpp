@@ -36,7 +36,7 @@ bool DEntry ::remove_entry(const std::string &path) {
 InodeType DEntry ::get_inode(const std::string &path) const {
 
     if (!this->exists(path)) {
-        return false;
+        return NOTFOUNDERROR;
     }
 
     const auto it = this->inode_map.find(path);

@@ -90,7 +90,7 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
 
         path_handler.add_path(newpath, inode_remov_path, bmanager);
         return 0;
-    }else{
+    }else if(flags == RENAME_EXCHANGE){
         if (inode_new_path == NOTFOUNDERROR) {
             return -ENOENT;
         }
@@ -99,6 +99,15 @@ int rename (const char *path, const char * newpath, unsigned int flags) {
         path_handler.add_path(newpath, inode_remov_path, bmanager);
         path_handler.add_path(path, inode_remov_newpath, bmanager);
 
+        return 0;
+    }else{
+        InodeType renamed_inode = path_handler.remove_path(path,bmanager);
+        if (inode_new_path != NOTFOUNDERROR ){
+            path_handler.remove_path(newpath,bmanager);
+            File fnew_path(inode_new_path);
+            fnew_path.delete_file(bmanager);
+        }
+        path_handler.add_path(newpath,renamed_inode,bmanager);
         return 0;
     }
 
@@ -214,8 +223,16 @@ int rmdir (const char *path){
     if (inode == NOTFOUNDERROR) {
         return -ENOENT;
     }
-    Directory directory(inode);
-    directory.remove_entry(path);
+    File fdir(inode);
+    if (fdir.get_type() != FileType::TDIRECTORY) {
+        return -ENOTDIR;
+    }
+    Directory directory(fdir);
+    if (not directory.empty()){
+        return -ENOTEMPTY;
+    }
+    directory.delete_dir(bmanager);
+    path_handler.remove_path(path,bmanager);
     return 0;
 }
 

@@ -6,16 +6,18 @@
 #include "../env.hpp"
 #include "blocks_manager.hpp"
 
-#define MANAGER_INODE_NUMBER 0
-
 BlocksManager ::~BlocksManager() { delete[] this->free_blocks; }
 
 void BlocksManager ::build() {
     const Env &envs = Env::get_instance();
-    this->first = 1;
+    this->qblocks_reserveds = (Env::get_instance().block_quantity*sizeof(BlockType)+3*sizeof(BlockType))/BLOCK_SIZE;
+    this->first = qblocks_reserveds;
     this->last = envs.block_quantity - 1;
     this->free_blocks = new BlockType[envs.block_quantity];
-    for (BlockType i = 1; i < envs.block_quantity - 1; i++) {
+    for (BlockType i = 0; i < qblocks_reserveds; i++) {
+        this->free_blocks[i] = OCCUPIED;
+    }
+    for (BlockType i = first; i < envs.block_quantity-1; i++) {
         this->free_blocks[i] = i + 1;
     }
     this->free_blocks[envs.block_quantity - 1] = END_OF_LIST;
@@ -23,7 +25,6 @@ void BlocksManager ::build() {
     // for some get_free_block call, as well ensure that the Inode slash
     // never is returned as free block in some get_free_block call
     this->free_blocks[envs.inode_slash-1] = envs.inode_slash + 1;
-    this->free_blocks[MANAGER_INODE_NUMBER] = OCCUPIED;
     this->free_blocks[envs.inode_slash] = OCCUPIED;
 }
 
@@ -34,8 +35,9 @@ void BlocksManager ::load() {
     if (!infile) {
         throw std::runtime_error("Could not open file " + path);
     }
-    infile.seekg(MANAGER_INODE_NUMBER * BLOCK_SIZE);
+    infile.seekg(0);
     this->free_blocks = new BlockType[envs.block_quantity];
+    infile.read(reinterpret_cast<char *>(&this->qblocks_reserveds), sizeof(BlockType));
     infile.read(reinterpret_cast<char *>(&this->first), sizeof(BlockType));
     infile.read(
         reinterpret_cast<char *>(this->free_blocks),
@@ -65,7 +67,7 @@ BlockType BlocksManager ::get_free_block() {
     BlockType block = this->first;
     this->first = this->free_blocks[block];
     this->free_blocks[block] = OCCUPIED;
-    assert(block != MANAGER_INODE_NUMBER && block != envs.inode_slash && block != OCCUPIED && block != END_OF_LIST);
+    assert(block >= qblocks_reserveds && block != envs.inode_slash && block != OCCUPIED && block != END_OF_LIST);
     return block;
 }
 
@@ -82,7 +84,9 @@ void BlocksManager ::save() const {
     if (!outfile) {
         throw std::runtime_error("Could not open file " + path);
     }
-    outfile.seekp(MANAGER_INODE_NUMBER * BLOCK_SIZE);
+    outfile.seekp(0);
+    outfile.write(reinterpret_cast<const char *>(&this->qblocks_reserveds),
+                  sizeof(BlockType));
     outfile.write(reinterpret_cast<const char *>(&this->first),
                   sizeof(BlockType));
     outfile.write(

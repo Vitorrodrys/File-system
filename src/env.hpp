@@ -11,14 +11,14 @@ class Env {
             disk_file(std::getenv("DISK_FILE")),
             disk_size(std::stoull(std::getenv("DISK_SIZE"))),
             block_quantity(disk_size / BLOCK_SIZE),
-            inode_slash(200)   
+            inode_slash(block_quantity - 5)   
         {}
 
     public:
         const std::string disk_file;
         const unsigned long long int disk_size;
         const unsigned long long int block_quantity;
-        const unsigned int inode_slash;
+        const uint64_t inode_slash;
         // cannot allow copy and assigment
         Env(const Env&) = delete;
         Env& operator=(const Env&) = delete;
