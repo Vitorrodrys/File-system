@@ -44,7 +44,7 @@ void BlocksManager ::load() {
         static_cast<std::streamsize>(envs.block_quantity * sizeof(BlockType)));
     infile.read(reinterpret_cast<char *>(&this->last), sizeof(BlockType));
 }
-BlocksManager ::BlocksManager() {}
+BlocksManager::BlocksManager() : free_blocks(nullptr), first(0), last(0), qblocks_reserveds(0) {}
 
 BlocksManager& BlocksManager::operator=(const BlocksManager &other) {
     const Env &envs = Env::get_instance();
@@ -72,6 +72,9 @@ BlockType BlocksManager ::get_free_block() {
 }
 
 void BlocksManager ::release_block(BlockType block) {
+    if (block >= Env::get_instance().block_quantity) {
+        throw std::runtime_error("Invalid block to release");
+    }
     this->free_blocks[this->last] = block;
     this->free_blocks[block] = END_OF_LIST;
     this->last = block;

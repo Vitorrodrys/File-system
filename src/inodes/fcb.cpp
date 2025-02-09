@@ -58,7 +58,7 @@ File::File(
           memset(&temp.headers, 0, sizeof(temp.headers));
 
 
-          file.seekg(id * BLOCK_SIZE);
+          file.seekp(id * BLOCK_SIZE);
           file.write(reinterpret_cast<char *>(&temp), sizeof(FcbInode));
 
           return temp;
@@ -312,7 +312,8 @@ void File::delete_file(BlocksManager& bmanager){
 
 void File::truncate(off_t new_size, BlocksManager& bmanager){
     if (new_size < fcb.size ){
-        remove_unused_blocks(new_size / BLOCK_DSIZE, bmanager);
+        BlockType last_used = (new_size / BLOCK_DSIZE) - ((new_size % BLOCK_DSIZE == 0) ? 1 : 0);
+        remove_unused_blocks(last_used, bmanager);
     }
     fcb.size = new_size;
     fcb.blocks = fcb.size / BLOCK_DSIZE + 1;

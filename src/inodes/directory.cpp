@@ -77,7 +77,7 @@ bool Directory::empty() const{
 }
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
-    file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
+    file.write(0, buffer.size(), reinterpret_cast<const char *>(buffer.data()), bmanager);
     if (static_cast<std::vector<unsigned char>::size_type>(file.get_size()) > buffer.size()){
         file.truncate(buffer.size(), bmanager);
     }
