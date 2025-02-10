@@ -40,7 +40,7 @@ typedef struct FcbInode {
 
 typedef struct DataInode {
     unsigned short current_size;
-    char data[BLOCK_SIZE - BLOCK_DSIZE];
+    char data[BLOCK_DSIZE];
 } DataInode;
 
 class File {
@@ -50,7 +50,7 @@ class File {
         FcbInode fcb;
 
     protected:
-        bool fill_indirect_header(HeaderIndexs& ind_header, BlockType new_block);
+        void fill_indirect_header(BlocksManager& bmanager, BlockType new_block);
         BlockType add_block(BlocksManager& bmanager);
         void remove_unused_blocks(BlockType last_used, BlocksManager& bmanager);
         
@@ -63,17 +63,37 @@ class File {
 
     public:
         explicit File(
+            mode_t mode,
+            FileType type,
+            InodeType inode,
+            uid_t uid,
+            gid_t gid
+        );
+        explicit File(
+            const std::string& name,
+            mode_t mode,
             BlocksManager& bmanager,
-            const struct fuse_context* fc, FileType type = FileType::TFILE
+            const struct fuse_context* fc,
+            FileType type = FileType::TFILE
         );
         explicit File(InodeType id);
         explicit File(const File &other);
+        ~File();
 
         FileType get_type() const;
         off_t get_size() const;
+        mode_t get_permissions() const { return fcb.permissions; }
+        gid_t get_group_id() const { return fcb.group; }
+        uid_t get_owner_id() const { return fcb.owner; }
+        time_t get_created_at() const { return fcb.created_at; }
+        time_t get_modified_at() const { return fcb.modified_at; }
+        time_t get_accessed_at() const { return fcb.accessed_at; }
+        off_t get_quantity_blocks() const { return fcb.blocks; }
         InodeType get_inode() const;
         size_t read(off_t offset, size_t size, char* buf);
         size_t write(off_t offset, size_t size, const char* buf, BlocksManager& bmanager);
+        void delete_file(BlocksManager& bmanager);
+        void truncate(off_t new_size, BlocksManager& bmanager);
 };
 
 #endif

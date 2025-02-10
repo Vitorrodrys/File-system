@@ -11,7 +11,6 @@
 class DEntry {
     public:
         explicit DEntry();
-        DEntry(const DEntry &other);
         ~DEntry();
  
 

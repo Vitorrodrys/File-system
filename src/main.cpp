@@ -1,14 +1,9 @@
-#include "superblock/blocks_manager.hpp"
+#define FUSE_USE_VERSION 31
+#include <fuse3/fuse.h>
+#include "fuse_interface.hpp"
 
-int main() {
+int main(int argc, char *argv[]) {
 
-    BlocksManager manager;
-    InodeType a = manager.get_free_block();
-    InodeType b = manager.get_free_block();
-    manager.release_block(b);
-    manager.release_block(a);
-    manager.save("test.bin");
-    BlocksManager manager2("test.bin");
-    InodeType c = manager2.get_free_block();
-    InodeType d = manager2.get_free_block();
+    const struct fuse_operations *fuseop = build_fuse_operations();
+    return fuse_main(argc, argv, fuseop, 0);
 }

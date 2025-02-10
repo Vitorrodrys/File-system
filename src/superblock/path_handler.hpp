@@ -1,7 +1,5 @@
 #ifndef COMMON_OPERATIONS_HPP
 #define COMMON_OPERATIONS_HPP
-#include <iostream>
-#include <sstream>
 #include <string>
 
 #include "dentry.hpp"
@@ -14,7 +12,6 @@ class PathHandler {
         DEntry dentry;
 
     public:
-        explicit PathHandler(DEntry& dentry);
         explicit PathHandler();
         PathHandler& operator=(const PathHandler& other);
         InodeType get_inode(const std::string& path);
@@ -26,6 +23,6 @@ class PathHandler {
             bmanager: BlocksManager -> a reference to the blocks manager object
         */
         InodeType remove_path(const std::string& path, BlocksManager& bmanager);
-        bool add_path(const std::string &path,InodeType inode) ;
+        bool add_path(const std::string &path,InodeType inode, BlocksManager &bmanager) ;
 };
 #endif

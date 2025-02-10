@@ -1,5 +1,6 @@
 #include <regex>
 
+#include "../env.hpp"
 #include "path_handler.hpp"
 
 
@@ -11,9 +12,10 @@ PathHandler& PathHandler::operator=(const PathHandler &other) {
     this->dentry = other.dentry;
     return *this;
 }
-PathHandler::PathHandler(DEntry &dentry) : dentry(dentry) {}
 
-PathHandler::PathHandler() : dentry(DEntry()) {}
+PathHandler::PathHandler() {
+    dentry.add_entry("/", Env::get_instance().inode_slash);
+}
 
 InodeType PathHandler::get_inode(const std::string &path) {
     if (dentry.exists(path)) {
@@ -41,8 +43,8 @@ InodeType PathHandler::get_inode(const std::string &path) {
             return (stream.eof()) ? last_inode : NOTFOUNDERROR;
         }
         Directory dir(file);
-        last_inode = dir.get_inode(token);
-        if (last_inode == 0) {
+        last_inode = dir.get_entry(token);
+        if (last_inode == NOTFOUNDERROR) {
             return NOTFOUNDERROR;
         }
         dentry.add_entry(subpath, last_inode);
@@ -52,14 +54,13 @@ InodeType PathHandler::get_inode(const std::string &path) {
 }
 
 InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmanager) {
-    
-    std::regex regex(R"(^(.*)/([^/]+)$)");
+    const std::regex regex(R"(^(.*)/([^/]+)$)");
     std::smatch match;
 
     std::regex_search(path, match, regex);
 
-    std::string parent = match[1]; // catch the parent directory of the path
-    std::string child = match[2]; // catch the last child of path
+    const std::string parent = (match[1].str().empty())?"/":match[1].str();// catch the parent directory of the path
+    const std::string child = match[2]; // catch the last child of path
     InodeType parent_inode;
 
     if (dentry.remove_entry(path)){
@@ -78,14 +79,18 @@ InodeType PathHandler::remove_path(const std::string &path, BlocksManager &bmana
 }
 
 
-bool PathHandler:: add_path(const std::string &path,InodeType inode) {
+bool PathHandler:: add_path(const std::string &path,InodeType inode, BlocksManager &bmanager) {
 
+    if ( path == "/" ){
+        dentry.add_entry(path, Env::get_instance().inode_slash);
+        return true;
+    }
     std::regex regex(R"(^(.*)/([^/]+)$)");
     std::smatch match;
 
     std::regex_search(path, match, regex);
 
-    const std::string parent = match[1];
+    const std::string parent = (match[1].str().empty())?"/":match[1].str();
     const std::string child = match[2];
 
     const InodeType inode_parent =get_inode(parent);
@@ -96,6 +101,7 @@ bool PathHandler:: add_path(const std::string &path,InodeType inode) {
     Directory dir(inode_parent);
     dir.create_entry(child, inode);
     dentry.add_entry(path, inode);
+    dir.flush(bmanager);
 
      return true;
 }

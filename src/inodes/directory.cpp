@@ -1,42 +1,46 @@
 #include "directory.hpp"
+#include <iostream>
 
-#include "../env.hpp"
-
-const Env &env = Env::get_instance();
 
 Directory::Directory(
+    const std::string& name,
+    mode_t permissions,
     BlocksManager &bmanager,
-    struct fuse_file_info *fi,
     const struct fuse_context *fc
-) : file(bmanager, fc, FileType::TDIRECTORY) {}
+) : file(name, permissions, bmanager, fc, FileType::TDIRECTORY) {}
 
 Directory::Directory(InodeType id) : file(id) {
     load_entries();
 }
-Directory::Directory(File &file) : file(file) {
+Directory::Directory(const File &file) : file(file) {
     load_entries();
 }
+Directory::~Directory() {}
 
-void Directory::load_entries(){
+void Directory::load_entries() {
     off_t file_size = file.get_size();
-    char *buf = new char[file_size];
-    file.read(0, file_size, buf);
+    std::vector<char> buf(file_size);
+    file.read(0, file_size, buf.data());
 
     int index = 0;
-
     while (index < file_size) {
-        std::string key(buf + index);
+        std::string key(buf.data() + index);
         index += key.length() + 1;
 
-        std::string inode_str(buf + index);
+        if (index > file_size){
+            throw std::runtime_error("Corrupted directory file: invalid entry format");
+        }
+        std::string inode_str(buf.data() + index);
         index += inode_str.length() + 1;
+        if (index > file_size){
+            throw std::runtime_error("Corrupted directory file: invalid entry format");
+        }
 
         entries[key] = static_cast<InodeType>(std::stoi(inode_str));
+        std::cerr << "[DEBUG] loading directory entry: " << key << std::endl;
     }
-
-    delete[] buf;
 }
-std::vector<unsigned char> Directory::serialize_entries() {
+std::vector<unsigned char> Directory::serialize_entries() const {
     std::vector<unsigned char> buffer;
     for (auto &entry : entries) {
         buffer.insert(buffer.end(), entry.first.begin(), entry.first.end());
@@ -50,7 +54,7 @@ std::vector<unsigned char> Directory::serialize_entries() {
 }
 
 bool Directory::create_entry(const std::string &key, InodeType inode) {
-    if (entries.find(key) != entries.end()) {
+    if (entries.contains(key)) {
         return false;
     }
     entries[key] = inode;
@@ -58,21 +62,34 @@ bool Directory::create_entry(const std::string &key, InodeType inode) {
 }
 
 InodeType Directory::remove_entry(const std::string &key) {
-    if (entries.find(key) == entries.end()) {
+    if (not entries.contains(key)) {
         return NOTFOUNDERROR;
     }
-    InodeType inode = entries[key];
+    const InodeType inode = entries[key];
     entries.erase(key);
     return inode;
 }
+void Directory::delete_dir(BlocksManager& bmanager){
+    file.delete_file(bmanager);
+}
+bool Directory::empty() const{
+    return entries.empty();
+}
 void Directory::flush(BlocksManager &bmanager) {
     std::vector<unsigned char> buffer = serialize_entries();
-    file.write(0, buffer.size(), reinterpret_cast<char *>(buffer.data()), bmanager);
+    file.write(0, buffer.size(), reinterpret_cast<const char *>(buffer.data()), bmanager);
+    if (static_cast<std::vector<unsigned char>::size_type>(file.get_size()) > buffer.size()){
+        file.truncate(buffer.size(), bmanager);
+    }
 }
 
-InodeType Directory::get_inode(const std::string &key) {
-    if (entries.find(key) == entries.end()) {
+InodeType Directory::get_entry(const std::string &key) {
+    if (not entries.contains(key)) {
         return NOTFOUNDERROR;
     }
     return entries[key];
+}
+
+InodeType Directory::get_inode() const{
+    return file.get_inode();
 }

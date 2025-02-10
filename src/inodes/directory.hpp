@@ -14,17 +14,34 @@ class Directory {
     private:
         File file;
         std::unordered_map<std::string, InodeType> entries;
-        std::vector<unsigned char> serialize_entries();
+        std::vector<unsigned char> serialize_entries() const;
         void load_entries();
 
     public:
-        explicit Directory(BlocksManager& bmanager, struct fuse_file_info* fi, const struct fuse_context* fc);
+        explicit Directory(const std::string& name, mode_t permissions, BlocksManager& bmanager, const struct fuse_context* fc);
         explicit Directory(InodeType id);
-        explicit Directory(File& file);
+        explicit Directory(const File& file);
+        ~Directory();
         bool create_entry(const std::string& key, InodeType inode);
         InodeType remove_entry(const std::string& key);
-        InodeType get_inode(const std::string& key);
+        InodeType get_entry(const std::string& key);
+        InodeType get_inode() const;
+        void delete_dir(BlocksManager& bmanager);
+        bool empty() const;
         void flush(BlocksManager& bmanager);
+
+        // Allow to iterate by directory entries
+        using Iterator = std::unordered_map<std::string, InodeType>::iterator;
+        using ConstIterator = std::unordered_map<std::string, InodeType>::const_iterator;
+
+        Iterator begin() { return entries.begin(); }
+        Iterator end() { return entries.end(); }
+
+        ConstIterator begin() const { return entries.begin(); }
+        ConstIterator end() const { return entries.end(); }
+
+        ConstIterator cbegin() const { return entries.cbegin(); }
+        ConstIterator cend() const { return entries.cend(); }
 };
 
 

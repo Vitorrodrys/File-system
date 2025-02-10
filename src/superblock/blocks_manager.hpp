@@ -13,13 +13,14 @@ const InodeType OCCUPIED = Env::get_instance().block_quantity+2;
 class BlocksManager {
 
     private:
+        BlockType qblocks_reserveds;
         BlockType first;
         BlockType last;
         BlockType* free_blocks;
 
-        void init();
-
     public:
+        void build();
+        void load();
         BlocksManager& operator=(const BlocksManager& other);
         explicit BlocksManager();
         ~BlocksManager();
