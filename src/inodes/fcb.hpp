@@ -7,7 +7,7 @@
 #include "../superblock/types.hpp"
 
 #define MAX_POINTERS 12
-#define BLOCK_DSIZE (BLOCK_SIZE - sizeof(unsigned short))
+#define BLOCK_DSIZE (uint32_t)(BLOCK_SIZE - sizeof(uint32_t))
 
 enum class FileType {
     TFILE,
@@ -39,7 +39,7 @@ typedef struct FcbInode {
 
 
 typedef struct DataInode {
-    unsigned short current_size;
+    uint32_t current_size;
     char data[BLOCK_DSIZE];
 } DataInode;
 
@@ -59,7 +59,7 @@ class File {
         BlockType load_indirect(BlockType block, HeaderIndexs* indirect_inode);
         BlockType get_block_value(uint32_t index);
         bool load_data_block(BlockType block, DataInode* inoded);
-        size_t write_extra(size_t size, const char* buf, BlocksManager& bmanager);
+        size_t write_extra(uint32_t size, const char* buf, BlocksManager& bmanager);
 
     public:
         explicit File(

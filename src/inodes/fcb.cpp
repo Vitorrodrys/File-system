@@ -1,9 +1,9 @@
 #define FUSE_USE_VERSION 31
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <functional>
 #include <fuse3/fuse.h>
-#include <unordered_map>
 
 #include "../env.hpp"
 #include "fcb.hpp"
@@ -204,27 +204,6 @@ BlockType File::add_block(BlocksManager &bmanager) {
     return new_block;
 }
 
-size_t File::write_extra(size_t size, const char *buf,
-                         BlocksManager &bmanager) {
-    size_t total_writen = 0;
-    size_t remaining_size = size;
-    off_t offset = 0;
-    BlockType new_block;
-    DataInode data;
-    while (remaining_size > 0) {
-        new_block = add_block(bmanager);
-        data.current_size = std::min(static_cast<uint16_t>(remaining_size),
-                                     static_cast<uint16_t>(BLOCK_DSIZE));
-        memcpy(data.data, buf + offset, data.current_size);
-        file.seekp(new_block * BLOCK_SIZE);
-        file.write(reinterpret_cast<char *>(&data), sizeof(DataInode));
-        offset += data.current_size;
-        remaining_size -= data.current_size;
-        total_writen += data.current_size;
-    }
-    return total_writen;
-}
-
 void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
     std::function<void(BlockType, HeaderIndexs *)> clean =
         [&](BlockType from, HeaderIndexs *headers) {
@@ -262,6 +241,25 @@ void File::remove_unused_blocks(BlockType last_used, BlocksManager &bmanager) {
     file.write(reinterpret_cast<const char *>(&headers), sizeof(HeaderIndexs));
 }
 
+size_t File::write_extra(uint32_t size, const char *buf,
+                         BlocksManager &bmanager) {
+    size_t total_writen = 0;
+    uint32_t remaining_size = size;
+    off_t offset = 0;
+    BlockType new_block;
+    DataInode data;
+    while (remaining_size > 0) {
+        new_block = add_block(bmanager);
+        data.current_size = std::min(remaining_size, BLOCK_DSIZE);
+        memcpy(data.data, buf + offset, data.current_size);
+        file.seekp(new_block * BLOCK_SIZE);
+        file.write(reinterpret_cast<char *>(&data), sizeof(DataInode));
+        offset += data.current_size;
+        remaining_size -= data.current_size;
+        total_writen += data.current_size;
+    }
+    return total_writen;
+}
 size_t File::write(off_t offset, size_t size, const char *buf,
                    BlocksManager &bmanager) {
     if ( offset > fcb.size ) {
@@ -270,9 +268,9 @@ size_t File::write(off_t offset, size_t size, const char *buf,
     size_t total_written = 0;
     uint32_t ind_from_block = offset / BLOCK_DSIZE;
     BlockType from_block = get_block_value(ind_from_block);
-    uint16_t from_offset = offset % BLOCK_DSIZE;
-    uint16_t remaining_size = size;
-    uint16_t remaining_block;
+    uint32_t from_offset = offset % BLOCK_DSIZE;
+    uint32_t remaining_size = size;
+    uint32_t remaining_block;
     DataInode data;
 
     while (remaining_size > 0) {
@@ -281,15 +279,15 @@ size_t File::write(off_t offset, size_t size, const char *buf,
                 write_extra(remaining_size, buf + total_written, bmanager);
             total_written += extra_writted;
             fcb.size = offset + total_written;
-            fcb.blocks = fcb.size / BLOCK_DSIZE+1;
+            fcb.blocks = std::ceil(fcb.size / BLOCK_DSIZE)+1;
             update_fcb();
             return total_written;
         }
-        remaining_block =
-            std::min(static_cast<uint16_t>(remaining_size),
-                     static_cast<uint16_t>(BLOCK_DSIZE - from_offset));
+        remaining_block = std::min(remaining_size, BLOCK_DSIZE - from_offset);
         memcpy(data.data + from_offset, buf + total_written, remaining_block);
-        data.current_size = from_offset + remaining_block;
+        if (from_offset + remaining_block > data.current_size) {
+            data.current_size = from_offset + remaining_block;
+        }
         file.seekp(from_block * BLOCK_SIZE);
         file.write(reinterpret_cast<char *>(&data), sizeof(DataInode));
         ind_from_block++;
@@ -314,11 +312,11 @@ void File::truncate(off_t new_size, BlocksManager& bmanager){
     if (new_size == 0 ){
         remove_unused_blocks(0, bmanager);
     }else if (new_size < fcb.size ){
-        BlockType last_used = (new_size / BLOCK_DSIZE) - ((new_size % BLOCK_DSIZE == 0) ? 1 : 0);
+        BlockType last_used = std::ceil((new_size / BLOCK_DSIZE) - 1);
         remove_unused_blocks(last_used, bmanager);
     }
     fcb.size = new_size;
-    fcb.blocks = fcb.size / BLOCK_DSIZE + 1;
+    fcb.blocks = std::ceil( fcb.size / BLOCK_DSIZE ) + 1;
     update_fcb();
 }
 
