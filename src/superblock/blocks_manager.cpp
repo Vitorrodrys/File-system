@@ -44,7 +44,7 @@ void BlocksManager ::load() {
         static_cast<std::streamsize>(envs.block_quantity * sizeof(BlockType)));
     infile.read(reinterpret_cast<char *>(&this->last), sizeof(BlockType));
 }
-BlocksManager::BlocksManager() : free_blocks(nullptr), first(0), last(0), qblocks_reserveds(0) {}
+BlocksManager::BlocksManager() : first(0), last(0), free_blocks(nullptr), qblocks_reserveds(0) {}
 
 BlocksManager& BlocksManager::operator=(const BlocksManager &other) {
     const Env &envs = Env::get_instance();

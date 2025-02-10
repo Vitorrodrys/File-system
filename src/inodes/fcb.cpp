@@ -311,7 +311,9 @@ void File::delete_file(BlocksManager& bmanager){
 }
 
 void File::truncate(off_t new_size, BlocksManager& bmanager){
-    if (new_size < fcb.size ){
+    if (new_size == 0 ){
+        remove_unused_blocks(0, bmanager);
+    }else if (new_size < fcb.size ){
         BlockType last_used = (new_size / BLOCK_DSIZE) - ((new_size % BLOCK_DSIZE == 0) ? 1 : 0);
         remove_unused_blocks(last_used, bmanager);
     }
