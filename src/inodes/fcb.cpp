@@ -279,7 +279,7 @@ size_t File::write(off_t offset, size_t size, const char *buf,
                 write_extra(remaining_size, buf + total_written, bmanager);
             total_written += extra_writted;
             fcb.size = offset + total_written;
-            fcb.blocks = std::ceil(fcb.size / BLOCK_DSIZE)+1;
+            fcb.blocks = std::ceil(static_cast<double>(fcb.size) / BLOCK_DSIZE)+1;
             update_fcb();
             return total_written;
         }
@@ -312,11 +312,11 @@ void File::truncate(off_t new_size, BlocksManager& bmanager){
     if (new_size == 0 ){
         remove_unused_blocks(0, bmanager);
     }else if (new_size < fcb.size ){
-        BlockType last_used = std::ceil((new_size / BLOCK_DSIZE) - 1);
+        BlockType last_used = std::ceil((static_cast<double>(new_size) / BLOCK_DSIZE) - 1);
         remove_unused_blocks(last_used, bmanager);
     }
     fcb.size = new_size;
-    fcb.blocks = std::ceil( fcb.size / BLOCK_DSIZE ) + 1;
+    fcb.blocks = std::ceil( static_cast<double>(fcb.size) / BLOCK_DSIZE ) + 1;
     update_fcb();
 }
 
