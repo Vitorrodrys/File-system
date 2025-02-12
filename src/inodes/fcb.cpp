@@ -283,6 +283,7 @@ size_t File::write(off_t offset, size_t size, const char *buf,
             update_fcb();
             return total_written;
         }
+
         remaining_block = std::min(remaining_size, BLOCK_DSIZE - from_offset);
         memcpy(data.data + from_offset, buf + total_written, remaining_block);
         if (from_offset + remaining_block > data.current_size) {

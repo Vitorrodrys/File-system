@@ -10,7 +10,7 @@ BlocksManager ::~BlocksManager() { delete[] this->free_blocks; }
 
 void BlocksManager ::build() {
     const Env &envs = Env::get_instance();
-    this->qblocks_reserveds = (Env::get_instance().block_quantity*sizeof(BlockType)+3*sizeof(BlockType))/BLOCK_SIZE;
+    this->qblocks_reserveds = (Env::get_instance().block_quantity*sizeof(BlockType)+3*sizeof(BlockType))/BLOCK_SIZE+1;
     this->first = qblocks_reserveds;
     this->last = envs.block_quantity - 1;
     this->free_blocks = new BlockType[envs.block_quantity];
